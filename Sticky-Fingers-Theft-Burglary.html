@@ -1,0 +1,1666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>STICKY FINGERS: Theft Crimes &amp; Burglary Arcade</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#07060d; --panel:#15111f;
+    --yellow:#ffd93b; --red:#ff4b5c; --cyan:#4bf3ff; --green:#39ff88; --magenta:#ff3ec8; --orange:#ff9a3b;
+    --text:#ecebff; --muted:#d9d4f7;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0; padding:0; min-height:100%;
+    background:radial-gradient(ellipse at 50% -10%, #2a1a22 0%, #07060d 60%);
+    color:var(--text); font-family:'Press Start 2P', monospace; overflow-x:hidden;}
+  #crt-overlay{pointer-events:none; position:fixed; inset:0; z-index:50;
+    background:repeating-linear-gradient(rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px, rgba(0,0,0,0.18) 3px, rgba(0,0,0,0) 4px);
+    mix-blend-mode:overlay;}
+  #cabinet{max-width:920px; margin:16px auto; padding:14px; border:4px solid #4a3340; border-radius:18px;
+    background:linear-gradient(180deg,#22161d,#0d0a12);
+    box-shadow:0 0 40px rgba(255,217,59,0.12), inset 0 0 30px rgba(0,0,0,0.6);}
+  #screenwrap{background:#000; border-radius:10px; border:3px solid #3a2733; padding:18px 18px 22px; min-height:600px; position:relative;}
+  #hud{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px 12px;
+    font-size:10px; padding:6px 4px 14px; letter-spacing:1px; border-bottom:2px dashed #4a3340; margin-bottom:14px;}
+  #hud .v{color:var(--cyan);}
+  #hud .lives{color:var(--red);}
+  .hud-btn{font-family:'Press Start 2P'; font-size:9px; background:#1d1520; border:2px solid var(--yellow); color:var(--yellow); padding:6px 8px; cursor:pointer; border-radius:4px;}
+  .hud-btn:hover{color:var(--cyan); border-color:var(--cyan);}
+  .hud-btn.teach{border-color:var(--magenta); color:var(--magenta);}
+  body.teacher .hud-btn.teach{background:var(--magenta); color:#1a0010;}
+  .tape{height:18px; margin:4px 0 12px; border-radius:2px;
+    background:repeating-linear-gradient(-45deg, var(--yellow) 0 18px, #111 18px 36px); opacity:.9;}
+  .screen{display:none; animation:fadein .2s ease;}
+  .screen.active{display:block;}
+  @keyframes fadein{from{opacity:0;} to{opacity:1;}}
+  h1{font-size:22px; text-align:center; color:var(--yellow); text-shadow:0 0 8px var(--yellow), 0 0 18px rgba(255,217,59,.5); margin:10px 0 6px; line-height:1.6;}
+  h2{font-size:14px; color:var(--cyan); text-shadow:0 0 6px var(--cyan); margin:0 0 12px; text-align:center; line-height:1.6;}
+  h3{font-size:11px; color:var(--yellow); margin:4px 0 10px; line-height:1.6;}
+  h4{font-size:10px; margin:0 0 6px; color:var(--cyan); line-height:1.5;}
+  p, li, .body-text{font-family:'Courier New', monospace; font-size:15px; line-height:1.6;}
+  .small{font-size:14px; color:var(--muted);}
+  .center{text-align:center;}
+  .blink{animation:blink 1s steps(2) infinite;}
+  @keyframes blink{50%{opacity:0;}}
+  .arcade-btn{font-family:'Press Start 2P', monospace; background:linear-gradient(180deg,#30232e,#1b141c);
+    color:var(--yellow); border:2px solid var(--yellow); padding:12px 16px; font-size:10px; line-height:1.6; cursor:pointer; border-radius:6px;
+    box-shadow:0 4px 0 #6b5a1a, 0 0 12px rgba(255,217,59,0.25); margin:6px;}
+  .arcade-btn:hover{filter:brightness(1.25);}
+  .arcade-btn:active{transform:translateY(3px); box-shadow:0 1px 0 #6b5a1a;}
+  .arcade-btn.green{color:var(--green); border-color:var(--green); box-shadow:0 4px 0 #1a6b3f, 0 0 12px rgba(57,255,136,.25);}
+  .arcade-btn.cyan{color:var(--cyan); border-color:var(--cyan); box-shadow:0 4px 0 #1a5f6b, 0 0 12px rgba(75,243,255,.25);}
+  .arcade-btn.red{color:var(--red); border-color:var(--red); box-shadow:0 4px 0 #6b1a22, 0 0 12px rgba(255,75,92,.25);}
+  .arcade-btn.magenta{color:var(--magenta); border-color:var(--magenta); box-shadow:0 4px 0 #6b1a52, 0 0 12px rgba(255,62,200,.25);}
+  .arcade-btn:disabled{opacity:.35; cursor:not-allowed;}
+  .panel{background:var(--panel); border:2px solid #3e2c38; border-radius:10px; padding:16px; margin:12px 0;}
+  .term-box{border-left:5px solid var(--cyan); padding:10px 14px; margin:10px 0; background:rgba(75,243,255,0.05);}
+  .term-box.red{border-color:var(--red); background:rgba(255,75,92,0.06);}
+  .term-box.red h4{color:var(--red);}
+  .term-box.yellow{border-color:var(--yellow); background:rgba(255,217,59,0.05);}
+  .term-box.yellow h4{color:var(--yellow);}
+  .term-box p{margin:4px 0; font-size:14px;}
+  .grid-2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  @media (max-width:680px){ .grid-2{grid-template-columns:1fr;} }
+  .chip{display:inline-block; font-family:'Courier New',monospace; font-size:14px; background:#1d1520; border:2px solid #5a4258; color:var(--text);
+    padding:9px 14px; margin:5px; border-radius:20px; cursor:pointer; user-select:none;}
+  .chip:hover{border-color:var(--cyan);}
+  .chip.active{background:var(--yellow); color:#1a1400; border-color:var(--yellow); font-weight:bold;}
+  .controls-box{border:2px dashed var(--magenta); border-radius:8px; padding:10px 14px; margin:10px 0;}
+  .controls-box p{margin:4px 0; font-size:14px;}
+  .preview-list{max-height:240px; overflow-y:auto; border:1px solid #3a2733; border-radius:8px; padding:6px 10px 6px 30px; margin:0;}
+  .preview-list li{font-size:14px; margin:6px 0;}
+  .timerwrap{max-width:720px; margin:6px auto 10px; display:flex; align-items:center; gap:10px;}
+  .timerbar-outer{flex:1; height:14px; background:#1d1520; border:2px solid #5a4258; border-radius:8px; overflow:hidden;}
+  .timerbar-inner{height:100%; width:100%; background:var(--cyan); transition:width .08s linear;}
+  .timer-secs{font-size:10px; color:var(--cyan); min-width:64px; text-align:right;}
+  .topbar{max-width:720px; margin:0 auto 6px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px; font-size:9px; color:var(--cyan); line-height:1.6;}
+  kbd{font-family:'Courier New'; background:#2a1f2a; border:1px solid #5a4258; border-radius:3px; padding:1px 5px; font-size:13px; color:var(--yellow);}
+
+  /* Level 1: catcher */
+  #fall-zone{position:relative; max-width:720px; height:400px; margin:0 auto; background:linear-gradient(180deg,#0a0710,#120c16);
+    border:3px solid #3e2c38; border-radius:8px; overflow:hidden; cursor:pointer;}
+  #fall-card{position:absolute; left:50%; top:0; transform:translateX(-50%); width:56%; max-width:420px;
+    background:var(--panel); border:2px solid var(--yellow); border-radius:10px; padding:12px 14px; z-index:2;
+    font-family:'Courier New',monospace; font-size:15px; line-height:1.45; text-align:center; overflow-wrap:break-word;
+    box-shadow:0 0 18px rgba(255,217,59,.2); transition:left .18s ease;}
+  #fall-card.ok{border-color:var(--green); box-shadow:0 0 22px rgba(57,255,136,.5);}
+  #fall-card.bad{border-color:var(--red); box-shadow:0 0 22px rgba(255,75,92,.5);}
+  .bin-label{cursor:pointer; position:absolute; bottom:0; width:42%; height:64px; display:flex; align-items:center; justify-content:center; text-align:center;
+    font-size:10px; line-height:1.6; border-top:4px solid; border-radius:10px 10px 0 0; z-index:1;}
+  #bin-left{left:2%; color:var(--green); border-color:var(--green); background:rgba(57,255,136,.08);}
+  #bin-right{right:2%; color:var(--red); border-color:var(--red); background:rgba(255,75,92,.08);}
+  #catcher{position:absolute; bottom:66px; width:36%; height:14px; border-radius:7px; background:var(--yellow); box-shadow:0 0 14px var(--yellow);
+    transition:left .15s ease; z-index:3;}
+  #catcher::after{content:'▼ ▼ ▼'; position:absolute; top:-2px; left:0; right:0; text-align:center; font-size:9px; color:#1a1400;}
+  .catch-btns{display:flex; justify-content:space-between; gap:10px; max-width:720px; margin:10px auto 0;}
+  .catch-btns .arcade-btn{flex:1; margin:0;}
+
+  /* Shooter */
+  .case-card{max-width:720px; margin:0 auto 8px; background:var(--panel); border:2px solid var(--cyan); border-radius:10px;
+    padding:12px 16px; font-family:'Courier New',monospace; font-size:15px; line-height:1.55;}
+  .case-q{max-width:720px; margin:0 auto 6px; font-family:'Courier New'; font-size:14px; color:var(--yellow); font-weight:bold;}
+  #shoot-canvas{display:block; width:100%; max-width:720px; margin:0 auto; background:#04030a; border:3px solid #3e2c38; border-radius:8px; cursor:crosshair; touch-action:none;}
+  #boss-hp-wrap{max-width:720px; margin:0 auto 6px; display:none; align-items:center; gap:10px; font-size:9px; color:var(--red);}
+  #boss-hp-wrap.show{display:flex;}
+  #boss-hp{flex:1; height:12px; border:2px solid var(--red); border-radius:6px; overflow:hidden; background:#1d1520;}
+  #boss-hp-fill{height:100%; width:100%; background:linear-gradient(90deg,var(--red),var(--orange)); transition:width .4s ease;}
+  .legend{max-width:720px; margin:8px auto 0; padding:0; list-style:none;}
+  .legend li{font-size:14px; margin:3px 0; padding:4px 8px; border-radius:6px;}
+  .legend li b{color:var(--yellow);}
+  .legend li.correct{background:rgba(57,255,136,.12); color:var(--green);}
+  .legend li.incorrect{background:rgba(255,75,92,.12); color:var(--red);}
+
+  /* Ladder */
+  #ladder{position:relative; max-width:520px; margin:6px auto 0; padding:6px 40px;}
+  #ladder::before, #ladder::after{content:''; position:absolute; top:0; bottom:0; width:8px; background:#6b4a2a; border-radius:4px;}
+  #ladder::before{left:22px;} #ladder::after{right:22px;}
+  .rung{position:relative; display:block; width:100%; margin:6px 0; padding:12px 14px 12px 64px; text-align:left; font-family:'Courier New'; font-size:15px; font-weight:bold;
+    color:var(--text); background:#2a1d14; border:3px solid #8a6238; border-radius:6px; cursor:pointer; z-index:1;}
+  .rung:hover:not(:disabled){border-color:var(--cyan);}
+  .rung .rk{color:var(--yellow); margin-right:8px;}
+  .rung.here{border-color:var(--yellow); box-shadow:0 0 14px rgba(255,217,59,.5);}
+  .rung.correct{border-color:var(--green); background:rgba(57,255,136,.15); color:var(--green);}
+  .rung.incorrect{border-color:var(--red); background:rgba(255,75,92,.15); color:var(--red);}
+  .rung:disabled{cursor:default;}
+  #climber{position:absolute; left:52px; width:30px; height:30px; z-index:2; transition:top .16s ease; pointer-events:none;
+    font-size:24px; line-height:30px; text-align:center; filter:drop-shadow(0 0 6px var(--yellow));}
+
+  .why-box{max-width:720px; margin:10px auto 0; font-family:'Courier New'; font-size:15px; line-height:1.6; padding:12px 14px; border-radius:8px; display:none;}
+  .why-box.ok{display:block; border:2px solid var(--green); background:rgba(57,255,136,.06);}
+  .why-box.bad{display:block; border:2px solid var(--red); background:rgba(255,75,92,.06);}
+  .why-box .verdict{font-family:'Press Start 2P'; font-size:10px; display:block; margin-bottom:8px; line-height:1.6;}
+  .why-box.ok .verdict{color:var(--green);} .why-box.bad .verdict{color:var(--red);}
+  .next-row{text-align:center; margin-top:10px; display:none;}
+  .teacher-only{display:none !important;}
+  body.teacher .teacher-only{display:inline-block !important;}
+  .streak{text-align:center; font-size:9px; color:var(--magenta); margin-top:8px; min-height:14px; line-height:1.6;}
+  .rank-row{display:flex; justify-content:space-between; gap:10px; max-width:600px; margin:5px auto; padding:8px 12px; border-radius:6px; background:rgba(255,255,255,0.03); font-family:'Courier New'; font-size:14px;}
+  .rank-row.achieved{background:rgba(57,255,136,0.14); border:1px solid var(--green); color:var(--green); font-weight:bold;}
+  .rank-meaning{font-family:'Courier New'; font-size:13px; color:var(--muted); max-width:600px; margin:0 auto 8px; padding:0 12px;}
+  .score-big{font-size:16px; color:var(--yellow); text-shadow:0 0 10px var(--yellow); text-align:center; margin:12px 0; line-height:1.6;}
+  .recap-item{margin:8px 0;}
+  .recap-item b{color:var(--cyan);}
+  .name-row{display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:center; margin:10px 0;}
+  .name-row label{font-size:10px; color:var(--yellow);}
+  .name-row input, .overlay input{font-family:'Courier New'; font-size:16px; padding:9px 10px; border-radius:6px; border:2px solid var(--cyan); background:#0d0a12; color:var(--text); min-width:240px;}
+  .report-status{font-family:'Courier New'; font-size:13px; color:var(--cyan); text-align:center; min-height:18px;}
+  #floatingflash{position:absolute; top:40%; left:50%; transform:translate(-50%,-50%); font-size:22px; font-family:'Press Start 2P';
+    pointer-events:none; opacity:0; z-index:70; text-shadow:0 0 14px currentColor; white-space:nowrap;}
+  #floatingflash.show{animation:flashpop 1s ease forwards;}
+  @keyframes flashpop{0%{opacity:0; transform:translate(-50%,-40%) scale(.6);} 20%{opacity:1; transform:translate(-50%,-50%) scale(1.1);} 70%{opacity:1;} 100%{opacity:0; transform:translate(-50%,-60%) scale(1);}}
+  .overlay{display:none; position:absolute; inset:0; z-index:60; background:rgba(4,3,8,0.93); align-items:flex-start; justify-content:center; padding:40px 20px;}
+  .overlay.show{display:flex;}
+  .overlay-inner{background:var(--panel); border:2px solid var(--cyan); border-radius:12px; padding:20px; max-width:600px; width:100%; box-shadow:0 0 30px rgba(75,243,255,0.25);}
+  .overlay-inner.mag{border-color:var(--magenta);}
+  .overlay-title{font-size:11px; color:var(--yellow); margin:0 0 10px; font-family:'Press Start 2P'; line-height:1.6;}
+  .pace-chip{display:block; width:100%; text-align:left; margin:6px 0;}
+  .err{color:var(--red); font-family:'Courier New'; font-size:14px; min-height:18px;}
+  .footer-note{font-family:'Courier New'; font-size:12px; color:#b7aed6; text-align:center; margin-top:18px;}
+</style>
+</head>
+<body>
+<div id="crt-overlay"></div>
+<div id="cabinet">
+  <div id="screenwrap">
+    <div id="hud">
+      <span>SCORE <span class="v" id="hud-score">0</span></span>
+      <span>LEVEL <span class="v" id="hud-level">-</span>/6</span>
+      <span class="lives">LIVES <span id="hud-lives">♥♥♥</span></span>
+      <span>STREAK <span class="v" id="hud-streak">0</span></span>
+      <button class="hud-btn" type="button" onclick="openPaceOverlay()" aria-label="Change reading speed">⏱ <span id="hud-pace-label">STANDARD</span></button>
+      <button class="hud-btn teach" type="button" onclick="openTeacher()" id="hud-teacher-btn">🔑 TEACHER</button>
+    </div>
+    <div id="floatingflash" aria-hidden="true"></div>
+
+    <!-- Pace overlay -->
+    <div class="overlay" id="pace-overlay" role="dialog" aria-modal="true" aria-labelledby="pace-overlay-title">
+      <div class="overlay-inner">
+        <p class="overlay-title" id="pace-overlay-title">READING SPEED</p>
+        <p class="body-text small">Every speed keeps a clock. Changing speed mid-question rescales the clock you're on, and the game pauses while this window is open.</p>
+        <button type="button" class="chip pace-chip" data-pace="standard" onclick="setPace('standard')">STANDARD: normal arcade timing</button>
+        <button type="button" class="chip pace-chip" data-pace="relaxed" onclick="setPace('relaxed')">RELAXED (+60%): 60% more time on every clock</button>
+        <button type="button" class="chip pace-chip" data-pace="slow" onclick="setPace('slow')">30% SPEED: every clock runs at 30% of standard speed</button>
+        <div class="center"><button type="button" class="arcade-btn cyan" onclick="closePaceOverlay()">▶ DONE</button></div>
+      </div>
+    </div>
+
+    <!-- Teacher overlay -->
+    <div class="overlay" id="teacher-overlay" role="dialog" aria-modal="true" aria-labelledby="teacher-overlay-title">
+      <div class="overlay-inner mag">
+        <p class="overlay-title" id="teacher-overlay-title">🔑 TEACHER MODE</p>
+        <div id="teacher-locked">
+          <p class="body-text small">Enter the teacher password to unlock level select, a Skip button on every question, and no life loss.</p>
+          <form onsubmit="submitTeacher(event)" class="center">
+            <label for="teacher-pw" class="body-text small">Password:</label><br>
+            <input type="password" id="teacher-pw" autocomplete="off">
+            <div class="err" id="teacher-err" aria-live="polite"></div>
+            <button type="submit" class="arcade-btn magenta">UNLOCK</button>
+            <button type="button" class="arcade-btn" onclick="closeTeacher()">CANCEL</button>
+          </form>
+        </div>
+        <div id="teacher-unlocked" style="display:none;">
+          <p class="body-text small">Teacher mode is <b>ON</b>. Lives are not lost, and every question has a ⏭ Skip button. Jump to any level:</p>
+          <div class="center">
+            <button type="button" class="arcade-btn cyan" onclick="jumpToLevel(1)">L1</button>
+            <button type="button" class="arcade-btn cyan" onclick="jumpToLevel(2)">L2</button>
+            <button type="button" class="arcade-btn cyan" onclick="jumpToLevel(3)">L3</button>
+            <button type="button" class="arcade-btn cyan" onclick="jumpToLevel(4)">L4</button>
+            <button type="button" class="arcade-btn cyan" onclick="jumpToLevel(5)">L5</button>
+            <button type="button" class="arcade-btn red" onclick="jumpToLevel(6)">BOSS</button>
+          </div>
+          <div class="center">
+            <button type="button" class="arcade-btn" onclick="teacherOff()">TURN TEACHER MODE OFF</button>
+            <button type="button" class="arcade-btn green" onclick="closeTeacher()">▶ RESUME</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TITLE -->
+    <section class="screen active" id="screen-title">
+      <div class="tape"></div>
+      <h1>STICKY FINGERS<br><span style="font-size:12px; color:var(--red); text-shadow:0 0 8px var(--red);">THEFT CRIMES &amp; BURGLARY ARCADE</span></h1>
+      <div class="tape"></div>
+      <p class="center body-text">Criminal Law<br>Five theft levels, three lives, and one break-in boss.</p>
+      <div class="center" style="margin-top:20px;">
+        <button type="button" class="arcade-btn green" onclick="goToBriefing()">▶ INSERT COIN</button>
+        <button type="button" class="arcade-btn magenta" onclick="openTeacher()">🔑 TEACHER MODE</button>
+      </div>
+      <p class="center blink" style="font-size:10px; color:var(--yellow); margin-top:18px;">PRESS INSERT COIN</p>
+      <p class="footer-note">Content drawn only from the Themis Criminal Law outline (Crimes Against Property).</p>
+    </section>
+
+    <!-- BRIEFING -->
+    <section class="screen" id="screen-briefing">
+      <h2>CASE BRIEFING</h2>
+      <div class="panel">
+        <h3>HOW THE GAME WORKS</h3>
+        <p class="body-text"><b>Levels 1 to 5 cover the theft crimes</b>: the elements of larceny, the intent to steal, the fraud and trust crimes (larceny by trick, embezzlement, false pretenses, and forgery), robbery and extortion, and receiving stolen property. <b>The Boss is burglary</b>, which isn't strictly a theft crime but is where a lot of thefts start.</p>
+        <ul>
+          <li><b>Levels 1, 3 and 4</b> are shooters: answer targets descend toward your ship, and you shoot the right one before they land.</li>
+          <li><b>Levels 2 and 5</b> are catcher games: steer the paddle so each falling fact card lands in the right bin.</li>
+          <li><b>The Boss</b> is a ladder climb: climb the elements of burglary and lock in the first one that fails.</li>
+          <li>Each level draws a random set of cases from a larger pool, so a replay won't be the same game.</li>
+          <li>No clock runs until you press <b>"I've read this: begin."</b> Each card or wave has its own clock after that.</li>
+          <li>A correct answer scores 100 points plus up to 50 for speed (Boss: 150 plus up to 50). A wrong answer or a timeout costs a life.</li>
+          <li>Every 5 correct in a row earns an <b>extra life</b>, and so does a flawless level. Lives bank up to 6.</li>
+          <li>After every answer you get an explanation and a <b>Next</b> button, so read at your own pace.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>PICK YOUR READING SPEED</h3>
+        <p class="body-text small">You can change this anytime with the ⏱ button in the top bar.</p>
+        <div class="center">
+          <button type="button" class="chip pace-chip" data-pace="standard" onclick="setPace('standard')">STANDARD: normal arcade timing</button>
+          <button type="button" class="chip pace-chip" data-pace="relaxed" onclick="setPace('relaxed')">RELAXED (+60%): 60% more time on every clock</button>
+          <button type="button" class="chip pace-chip" data-pace="slow" onclick="setPace('slow')">30% SPEED: every clock runs at 30% of standard speed</button>
+        </div>
+      </div>
+      <div class="center"><button type="button" class="arcade-btn green" onclick="startLevel(1)">▶ TO LEVEL 1</button></div>
+    </section>
+
+    <!-- THEFT LEVELS -->
+    <section class="screen" id="screen-intro1">
+      <h2>LEVEL 1: FIVE-FINGER INVADERS</h2>
+      <div class="panel">
+        <h3>THE MISSION</h3>
+        <p class="body-text">Common-law larceny is the <b>trespassory taking and carrying away of the personal property of another with the intent to permanently deprive</b> that person of it. Five invaders descend in a single row. If every element is met, shoot <b>LARCENY</b>. If not, shoot the element that fails. Intent gets its own level next, so in this level assume D intends to keep the property unless the facts say otherwise.</p>
+        <div class="controls-box">
+          <p><b>CONTROLS:</b> <kbd>←</kbd> / <kbd>→</kbd> move your ship, <kbd>Space</kbd> fires. With a mouse, click a target and your ship flies under it and fires. Shortcut: press the target's letter (<kbd>A</kbd>, <kbd>B</kbd>...) to auto-aim and fire.</p>
+        </div>
+        <h3>READ THE TARGETS FIRST</h3>
+        <ol class="preview-list" type="A">
+          <li><b>Larceny.</b> Every element is met.</li>
+          <li><b>No trespass.</b> The owner consented to D having the property, so the original taking wasn't trespassory.</li>
+          <li><b>No taking or carrying away.</b> Nothing moved from the owner's possession into D's control (caption and asportation).</li>
+          <li><b>Not personal property.</b> Real property, services, or intangibles that don't count.</li>
+          <li><b>Not another's property.</b> D has an equal right to possess it, or no one has rights in it anymore.</li>
+        </ol>
+        <div class="grid-2">
+          <div class="term-box">
+            <h4>CAPTION AND ASPORTATION</h4>
+            <p>Taking (caption) is any trespassory removal from the owner's possession into another's control, including through an agent. Carrying away (asportation) needs only slight movement, e.g., inches.</p>
+          </div>
+          <div class="term-box yellow">
+            <h4>CONTINUING TRESPASS</h4>
+            <p>If the original taking was wrongful but D didn't yet intend to steal (e.g., taking to borrow), the trespass continues, and larceny occurs when D later forms the intent to steal.</p>
+          </div>
+        </div>
+      </div>
+      <div class="center"><button type="button" class="arcade-btn green" onclick="beginLevel(1)">▶ I'VE READ THIS: BEGIN <span class="gate-secs" data-level="1"></span></button></div>
+    </section>
+    <section class="screen" id="screen-intro2">
+      <h2>LEVEL 2: BORROW OR STEAL</h2>
+      <div class="panel">
+        <h3>THE MISSION</h3>
+        <p class="body-text">Larceny is a <b>specific-intent crime</b>: the intent to permanently deprive must exist at the time of the taking. Fact cards drop from the sky. Slide the yellow paddle under the right bin before the card lands. If the card lands with the paddle in the middle, it falls between the bins and counts as a miss.</p>
+        <div class="controls-box">
+          <p><b>CONTROLS:</b> <kbd>←</kbd> / <kbd>→</kbd> move the paddle. <kbd>↓</kbd> or <kbd>Space</kbd> slams the card down now for a bigger speed bonus. With a mouse, click the left or right bin to move there and slam.</p>
+        </div>
+        <div class="grid-2">
+          <div class="term-box">
+            <h4>◀ LEFT BIN: INTENT TO STEAL</h4>
+            <p>Intending to keep it, abandon it, sell it back to the owner, pawn it with no ability to redeem it, return it only upon a reward, or create a substantial risk of its loss.</p>
+          </div>
+          <div class="term-box red">
+            <h4>RIGHT BIN ▶: NO INTENT TO STEAL</h4>
+            <p>Intending to borrow it with the ability to return it, to pay for merchandise D has the means to buy, or to take money as repayment of a debt under an honest claim of right.</p>
+          </div>
+        </div>
+        <div class="term-box yellow">
+          <h4>TIMING AND CHANGE OF HEART</h4>
+          <p>The crime is complete at the taking. Restoring the property after a change of heart is no defense. A mistake of fact negates the intent to steal even if the mistake was unreasonable.</p>
+        </div>
+      </div>
+      <div class="center"><button type="button" class="arcade-btn green" onclick="beginLevel(2)">▶ I'VE READ THIS: BEGIN <span class="gate-secs" data-level="2"></span></button></div>
+    </section>
+    <section class="screen" id="screen-intro3">
+      <h2>LEVEL 3: THE CON GAME</h2>
+      <div class="panel">
+        <h3>THE MISSION</h3>
+        <p class="body-text">Larceny, larceny by trick, embezzlement, and false pretenses all end with D holding V's property. What separates them is <b>how D got it and what passed</b>. Shoot the crime the facts show, or <b>NO THEFT CRIME</b> if none fits. A few cases test forgery or the modern theft statutes and carry their own targets.</p>
+        <div class="controls-box">
+          <p><b>CONTROLS:</b> Same as Level 1. <kbd>←</kbd>/<kbd>→</kbd> + <kbd>Space</kbd>, click a target, or press its letter.</p>
+        </div>
+        <div class="grid-2">
+          <div class="term-box">
+            <h4>LARCENY VS. EMBEZZLEMENT</h4>
+            <p>Embezzlement is the fraudulent conversion of another's property by someone in <b>lawful possession</b> of it. Larceny requires a trespassory taking. A low-level employee has only custody (larceny); a high-level employee may have possession (embezzlement).</p>
+          </div>
+          <div class="term-box">
+            <h4>LARCENY BY TRICK VS. FALSE PRETENSES</h4>
+            <p>Both require a false representation of a material past or present fact that the victim relies on. Larceny by trick gets D <b>possession</b>. False pretenses gets D <b>title</b>.</p>
+          </div>
+          <div class="term-box red">
+            <h4>NOT A REPRESENTATION</h4>
+            <p>A prediction, a false promise, or an opinion such as sales talk or puffing. Silence isn't one either, unless D caused the misunderstanding or owed V a fiduciary duty.</p>
+          </div>
+          <div class="term-box yellow">
+            <h4>BAILEES</h4>
+            <p>A bailee has possession and can embezzle. But a bailee who opens the bailor's closed container and takes the contents with intent to steal commits larceny.</p>
+          </div>
+        </div>
+        <h3>READ THE TARGETS FIRST</h3>
+        <ol class="preview-list" type="A">
+          <li><b>Larceny.</b> A trespassory taking, with no lawful possession.</li>
+          <li><b>Larceny by trick.</b> V hands over possession only, induced by fraud.</li>
+          <li><b>Embezzlement.</b> D lawfully possessed the property, then fraudulently converted it.</li>
+          <li><b>False pretenses.</b> V passes title in reliance on D's known false statement of fact.</li>
+          <li><b>No theft crime.</b> Something essential is missing.</li>
+        </ol>
+      </div>
+      <div class="center"><button type="button" class="arcade-btn green" onclick="beginLevel(3)">▶ I'VE READ THIS: BEGIN <span class="gate-secs" data-level="3"></span></button></div>
+    </section>
+    <section class="screen" id="screen-intro4">
+      <h2>LEVEL 4: STICK-UP SQUADRON</h2>
+      <div class="panel">
+        <h3>THE MISSION</h3>
+        <p class="body-text">Robbery is <b>larceny from the person or presence of the victim by force or intimidation</b>. Extortion is taking money or property by threat, under the modern statutes. Shoot the <b>most serious theft crime</b> D can be convicted of.</p>
+        <div class="controls-box">
+          <p><b>CONTROLS:</b> Same as Level 1. <kbd>←</kbd>/<kbd>→</kbd> + <kbd>Space</kbd>, click a target, or press its letter.</p>
+        </div>
+        <div class="grid-2">
+          <div class="term-box">
+            <h4>FORCE</h4>
+            <p>Slight force is enough, but it must be more than what's needed to take and carry away the property. An unnoticed pickpocketing isn't robbery. Neither is a purse-snatching in most states, unless the victim notices and resists or is knocked down, struck, or injured.</p>
+          </div>
+          <div class="term-box">
+            <h4>INTIMIDATION</h4>
+            <p>A threat of immediate serious physical injury to the victim, a close family member, or another person present. A threat to damage property, other than the victim's home, generally isn't enough.</p>
+          </div>
+          <div class="term-box yellow">
+            <h4>TIMING</h4>
+            <p>The common law requires the force before or at the same time as the taking. The modern trend accepts force immediately after it (e.g., during escape). Property is in the victim's presence if it's within reach or control.</p>
+          </div>
+          <div class="term-box red">
+            <h4>EXTORTION VS. ROBBERY</h4>
+            <p>Extortion's threats need not be of immediate or physical harm, and the property need not be on the victim or in the victim's presence. In most jurisdictions, making the threat is the crime. Larceny, assault, and battery merge into robbery.</p>
+          </div>
+        </div>
+        <h3>READ THE TARGETS FIRST</h3>
+        <ol class="preview-list" type="A">
+          <li><b>Robbery.</b> Larceny plus force or intimidation, from the victim's person or presence.</li>
+          <li><b>Larceny only.</b> A theft without the force or intimidation robbery needs.</li>
+          <li><b>Extortion.</b> Obtaining (or, in most places, threatening to obtain) property by a threat that doesn't qualify as robbery.</li>
+          <li><b>No theft crime.</b> No theft offense fits.</li>
+        </ol>
+      </div>
+      <div class="center"><button type="button" class="arcade-btn green" onclick="beginLevel(4)">▶ I'VE READ THIS: BEGIN <span class="gate-secs" data-level="4"></span></button></div>
+    </section>
+    <section class="screen" id="screen-intro5">
+      <h2>LEVEL 5: FENCE PATROL</h2>
+      <div class="panel">
+        <h3>THE MISSION</h3>
+        <p class="body-text">Receiving stolen property is a statutory crime: <b>receiving control of stolen property, knowing it is stolen, with intent to permanently deprive the owner</b>. Catch each card in the right bin. Unless a card says otherwise, assume the traditional rule: D must actually know the property is stolen, and that knowledge must exist when D receives it.</p>
+        <div class="controls-box">
+          <p><b>CONTROLS:</b> Same as Level 2. <kbd>←</kbd>/<kbd>→</kbd> move, <kbd>↓</kbd> or <kbd>Space</kbd> slams, or click a bin.</p>
+        </div>
+        <div class="grid-2">
+          <div class="term-box">
+            <h4>◀ LEFT BIN: GUILTY OF RECEIVING</h4>
+            <p>The property was stolen when received (e.g., through larceny, embezzlement, or false pretenses), D had control of it, D knew it was stolen at the time, and D intended to permanently deprive the owner.</p>
+          </div>
+          <div class="term-box red">
+            <h4>RIGHT BIN ▶: NOT GUILTY</h4>
+            <p>An element is missing, e.g., D learned the truth only later, or D never intended to deprive the owner.</p>
+          </div>
+          <div class="term-box yellow">
+            <h4>CONTROL IS ENOUGH</h4>
+            <p>Only control, not possession, is necessary.</p>
+          </div>
+          <div class="term-box yellow">
+            <h4>OTHER APPROACHES</h4>
+            <p><b>Modern view:</b> knowledge can be inferred from facts that would alert a reasonable person. <b>"Possession of stolen property" statutes</b> don't require the knowledge to coincide with receipt.</p>
+          </div>
+        </div>
+      </div>
+      <div class="center"><button type="button" class="arcade-btn green" onclick="beginLevel(5)">▶ I'VE READ THIS: BEGIN <span class="gate-secs" data-level="5"></span></button></div>
+    </section>
+    <section class="screen" id="screen-intro6">
+      <h2 style="color:var(--red); text-shadow:0 0 8px var(--red);">BOSS: THE BREAK-IN</h2>
+      <div class="panel">
+        <h3>THE MISSION</h3>
+        <p class="body-text">Burglary isn't strictly a theft crime, but thieves love it. Common-law burglary is the <b>breaking and entering of the dwelling of another at nighttime with the specific intent to commit a felony inside</b>. Your burglar climbs the elements from the bottom rung in that order. <b>Lock in the first element that fails.</b> If every element holds, climb to the top and lock in <b>BURGLARY</b>. Every correct climb knocks out one of the vault's locks. Use the common-law rules unless a case says otherwise.</p>
+        <div class="controls-box">
+          <p><b>CONTROLS:</b> <kbd>↑</kbd> / <kbd>↓</kbd> climb, <kbd>Space</kbd> or <kbd>Enter</kbd> locks in. With a mouse, click a rung to climb there and lock in.</p>
+        </div>
+        <div class="grid-2">
+          <div class="term-box">
+            <h4>BREAKING</h4>
+            <p>Using force, even slight force (e.g., opening an unlocked door), to create an opening. Walking through an open door isn't a breaking unless the opening must be enlarged. Entry by fraud or threat is a breaking. With consent, breaking into part of the structure (a closet door or wall safe) counts, but opening a desk drawer, trunk, or box doesn't. Force used to exit doesn't count.</p>
+          </div>
+          <div class="term-box">
+            <h4>ENTERING</h4>
+            <p>Any part of D's body (e.g., a hand through a broken window), or an instrument used to gain entry, crosses into the dwelling through the opening. Breaking and entering need not happen at the same time.</p>
+          </div>
+          <div class="term-box">
+            <h4>DWELLING OF ANOTHER</h4>
+            <p>A structure regularly occupied for habitation. It need not be occupied at the time, but it can't be abandoned. You can't burglarize your own dwelling, but an owner who transferred possession (e.g., to a tenant) can.</p>
+          </div>
+          <div class="term-box">
+            <h4>NIGHTTIME AND INTENT</h4>
+            <p>Nighttime is darkness between sunset and sunrise, and it isn't nighttime if there's enough natural light to see the burglar's face. The intent to commit a felony must exist at the time of the breaking and entering.</p>
+          </div>
+        </div>
+        <div class="term-box yellow">
+          <h4>MODERN STATUTES</h4>
+          <p>Most states require only an entry, extend burglary to nondwellings (e.g., businesses and cars), drop the nighttime requirement (a few keep it), and include intended misdemeanor thefts. A completed felony inside doesn't merge with the burglary.</p>
+        </div>
+      </div>
+      <div class="center"><button type="button" class="arcade-btn red" onclick="beginLevel(6)">▶ I'VE READ THIS: START THE BREAK-IN <span class="gate-secs" data-level="6"></span></button></div>
+    </section>
+
+    <!-- CATCHER PLAY (Levels 2, 5) -->
+    <section class="screen" id="screen-fall">
+      <h2 id="fall-title">LEVEL 2: BORROW OR STEAL</h2>
+      <div class="topbar"><span id="fall-progress">CARD 1/12</span><span>←/→ MOVE · ↓ SLAM · OR CLICK A BIN</span></div>
+      <div class="timerwrap"><div class="timerbar-outer"><div class="timerbar-inner"></div></div><span class="timer-secs"></span></div>
+      <div id="fall-zone">
+        <div id="fall-card"></div>
+        <div id="catcher"></div>
+        <div class="bin-label" id="bin-left"></div>
+        <div class="bin-label" id="bin-right"></div>
+      </div>
+      <div class="center"><button type="button" class="arcade-btn magenta teacher-only" id="fall-skip" onclick="l1Resolve('__skip')">⏭ SKIP: REVEAL ANSWER</button></div>
+      <div class="why-box" id="fall-why" aria-live="polite"></div>
+      <div class="next-row" id="fall-next-row"><button type="button" class="arcade-btn cyan" id="fall-next" onclick="l1Next()">NEXT CARD ▶</button></div>
+      <div class="streak" id="fall-streak"></div>
+    </section>
+
+    <!-- SHOOTER PLAY (Levels 1, 3, 4) -->
+    <section class="screen" id="screen-shoot">
+      <h2 id="shoot-title">FIVE-FINGER INVADERS</h2>
+      <div class="topbar"><span id="shoot-progress">CASE 1/8</span><span id="shoot-step"></span><span>←/→ MOVE · SPACE FIRE · CLICK OR LETTER = AUTO-AIM</span></div>
+      <div class="case-card" id="shoot-text"></div>
+      <div class="case-q" id="shoot-q"></div>
+      <div class="timerwrap"><div class="timerbar-outer"><div class="timerbar-inner"></div></div><span class="timer-secs"></span></div>
+      <div id="boss-hp-wrap"><span>SHIELDS</span><div id="boss-hp"><div id="boss-hp-fill"></div></div></div>
+      <canvas id="shoot-canvas" width="720" height="380" aria-label="Shooter play area. Use the letter keys or the answer list below to fire at a target."></canvas>
+      <ul class="legend" id="shoot-legend"></ul>
+      <div class="center"><button type="button" class="arcade-btn magenta teacher-only" id="shoot-skip" onclick="shResolve('__skip')">⏭ SKIP: REVEAL ANSWER</button></div>
+      <div class="why-box" id="shoot-why" aria-live="polite"></div>
+      <div class="next-row" id="shoot-next-row"><button type="button" class="arcade-btn cyan" id="shoot-next" onclick="shNext()">NEXT ▶</button></div>
+      <div class="streak" id="shoot-streak"></div>
+    </section>
+
+    <!-- LADDER PLAY (Boss) -->
+    <section class="screen" id="screen-ladder">
+      <h2 style="color:var(--red); text-shadow:0 0 8px var(--red);">BOSS: THE BREAK-IN</h2>
+      <div class="topbar"><span id="ladder-progress">CASE 1/11</span><span>↑/↓ CLIMB · SPACE LOCK IN · CLICK A RUNG</span></div>
+      <div class="case-card" id="ladder-text"></div>
+      <div class="case-q">Climb from the bottom. Lock in the first element that fails, or the top rung if every element holds.</div>
+      <div id="vault-hp-wrap" style="max-width:720px; margin:0 auto 6px; display:flex; align-items:center; gap:10px; font-size:9px; color:var(--red);"><span>VAULT LOCKS</span><div style="flex:1; height:12px; border:2px solid var(--red); border-radius:6px; overflow:hidden; background:#1d1520;"><div id="vault-hp-fill" style="height:100%; width:100%; background:linear-gradient(90deg,var(--red),var(--orange)); transition:width .4s ease;"></div></div></div>
+      <div class="timerwrap"><div class="timerbar-outer"><div class="timerbar-inner"></div></div><span class="timer-secs"></span></div>
+      <div id="ladder"><div id="climber">🦝</div></div>
+      <div class="center">
+        <button type="button" class="arcade-btn green" id="ladder-lock" onclick="ladderLock()">🔒 LOCK IN</button>
+        <button type="button" class="arcade-btn magenta teacher-only" id="ladder-skip" onclick="ladderResolve('__skip')">⏭ SKIP: REVEAL ANSWER</button>
+      </div>
+      <div class="why-box" id="ladder-why" aria-live="polite"></div>
+      <div class="next-row" id="ladder-next-row"><button type="button" class="arcade-btn cyan" id="ladder-next" onclick="ladderNext()">NEXT CASE ▶</button></div>
+      <div class="streak" id="ladder-streak"></div>
+    </section>
+
+    <!-- LEVEL DONE -->
+    <section class="screen" id="screen-done">
+      <h2 id="done-title">LEVEL CLEAR</h2>
+      <div class="score-big" id="done-score"></div>
+      <div class="panel">
+        <h3>CONCEPT RECAP</h3>
+        <div id="done-recap" class="body-text"></div>
+      </div>
+      <div class="center"><button type="button" class="arcade-btn green" id="done-next" onclick="afterDone()">CONTINUE ▶</button></div>
+    </section>
+
+    <!-- END -->
+    <section class="screen" id="screen-end">
+      <h2 style="color:var(--green); text-shadow:0 0 8px var(--green);">HEIST COMPLETE</h2>
+      <div class="score-big" id="end-score"></div>
+      <div class="panel">
+        <h3>RANKS</h3>
+        <div id="end-ranks"></div>
+      </div>
+      <div class="panel">
+        <h3>WHAT YOU COVERED</h3>
+        <div id="end-recap" class="body-text"></div>
+      </div>
+      <div class="panel">
+        <h3>DOWNLOAD YOUR COMPLETION REPORT</h3>
+        <p class="body-text small center">Enter your name, then save the report as a PDF to submit.</p>
+        <div class="name-row"><label for="end-name">NAME:</label><input type="text" id="end-name" autocomplete="name" maxlength="80"></div>
+        <div class="center">
+          <button type="button" class="arcade-btn green" onclick="saveReportPdf('end')">📄 SAVE AS PDF</button>
+          <button type="button" class="arcade-btn cyan" onclick="downloadReport('end')">⬇ DOWNLOAD (HTML)</button>
+        </div>
+        <div class="report-status" id="end-status" aria-live="polite"></div>
+      </div>
+      <div class="center"><button type="button" class="arcade-btn" onclick="playAgain()">↻ PLAY AGAIN</button></div>
+    </section>
+
+    <!-- GAME OVER -->
+    <section class="screen" id="screen-gameover">
+      <h2 style="font-size:24px; color:var(--red); text-shadow:0 0 10px var(--red), 0 0 22px rgba(255,75,92,.6);">GAME OVER</h2>
+      <p class="center body-text" id="gameover-level"></p>
+      <div class="score-big" id="gameover-score"></div>
+      <div class="panel">
+        <h3>RANKS</h3>
+        <div id="gameover-ranks"></div>
+      </div>
+      <div class="panel">
+        <h3>DOWNLOAD YOUR COMPLETION REPORT</h3>
+        <p class="body-text small center">Enter your name, then save the report as a PDF to submit.</p>
+        <div class="name-row"><label for="go-name">NAME:</label><input type="text" id="go-name" autocomplete="name" maxlength="80"></div>
+        <div class="center">
+          <button type="button" class="arcade-btn green" onclick="saveReportPdf('go')">📄 SAVE AS PDF</button>
+          <button type="button" class="arcade-btn cyan" onclick="downloadReport('go')">⬇ DOWNLOAD (HTML)</button>
+        </div>
+        <div class="report-status" id="go-status" aria-live="polite"></div>
+      </div>
+      <div class="center"><button type="button" class="arcade-btn green" onclick="playAgain()">↻ PLAY AGAIN</button></div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // Teacher mode password. CLIENT-SIDE CHECK ONLY: anyone who opens the page source can read it.
+  // It deters casual clicking, not a determined student. Change it here before distributing.
+  var TEACHER_PASSWORD = 'ASPORTATION';
+
+  var GAME_TITLE = 'Sticky Fingers: Theft Crimes & Burglary Arcade';
+  var GAME_SHORT = 'Sticky Fingers';
+  var START_LIVES = 3, MAX_LIVES = 6, STREAK_FOR_LIFE = 5;
+
+  var state;
+  function freshState(){
+    return { score:0, lives:START_LIVES, level:0, streak:0, bestStreak:0, bonusStreak:0,
+      levelMistakes:0, teacherUsed:false, pendingGameOver:false, finished:false, stats:{} };
+  }
+  state = freshState();
+  var teacher = false;
+
+  function $(id){ return document.getElementById(id); }
+  function showScreen(id){
+    var all = document.querySelectorAll('.screen');
+    for(var i=0;i<all.length;i++){ all[i].classList.remove('active'); }
+    $(id).classList.add('active');
+    try{ window.scrollTo({top:0, behavior:'smooth'}); }catch(e){}
+  }
+  function activeScreen(){ var a = document.querySelector('.screen.active'); return a ? a.id : ''; }
+  function updateHud(){
+    $('hud-score').textContent = state.score.toLocaleString();
+    $('hud-level').textContent = state.level > 0 ? state.level : '-';
+    var slots = Math.max(START_LIVES, state.lives), h = '';
+    for(var i=0;i<slots;i++){ h += (i < state.lives) ? '♥' : '♡'; }
+    $('hud-lives').textContent = h;
+    $('hud-streak').textContent = state.streak;
+  }
+  function addScore(n){ state.score = Math.max(0, state.score + n); updateHud(); }
+  function shuffle(arr){ var a = arr.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+  // ---------- Sound ----------
+  var actx = null;
+  function beep(freq, dur, type, vol){
+    try{
+      if(!actx){ actx = new (window.AudioContext || window.webkitAudioContext)(); }
+      var o = actx.createOscillator(), g = actx.createGain();
+      o.type = type || 'square'; o.frequency.value = freq; g.gain.value = vol || 0.05;
+      o.connect(g); g.connect(actx.destination); o.start();
+      g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + (dur||0.12));
+      o.stop(actx.currentTime + (dur||0.12) + 0.02);
+    }catch(e){ /* audio not available */ }
+  }
+  function playJingle(notes, dur, gapMs, type){ notes.forEach(function(f, i){ setTimeout(function(){ beep(f, dur, type); }, i*gapMs); }); }
+  function sfxCorrect(){ beep(880,0.09,'square'); setTimeout(function(){ beep(1320,0.12,'square'); },70); }
+  function sfxWrong(){ beep(180,0.22,'sawtooth'); }
+  function sfxClick(){ beep(440,0.05,'triangle'); }
+  function sfxLaser(){ beep(1200,0.06,'square',0.03); setTimeout(function(){ beep(700,0.05,'square',0.03); },40); }
+  function sfxBoom(){ beep(120,0.25,'sawtooth',0.06); }
+  function sfxStep(){ beep(520,0.04,'triangle',0.04); }
+  function playStartJingle(){ playJingle([523.25,659.25,783.99,1046.50], 0.14, 110, 'square'); }
+  function playVictoryJingle(){ playJingle([523.25,523.25,523.25,659.25,783.99,1046.50,1318.51], 0.15, 105, 'square'); }
+  function playGameOverJingle(){ playJingle([392.00,349.23,293.66,233.08,196.00], 0.32, 190, 'sawtooth'); }
+  function playExtraLifeJingle(){ playJingle([659.25,830.61,987.77,1318.51], 0.11, 90, 'square'); }
+
+  function flashText(text, color){
+    var el = $('floatingflash'); el.textContent = text; el.style.color = color || 'var(--yellow)';
+    el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  }
+
+  // ---------- Pace ----------
+  var PACE_MODE = 'standard';
+  function paceMult(){ return PACE_MODE === 'relaxed' ? 1.6 : (PACE_MODE === 'slow' ? (1/0.3) : 1); }
+  var PACE_LABELS = {standard:'STANDARD', relaxed:'RELAXED (+60%)', slow:'30% SPEED'};
+  window.setPace = function(mode, silent){
+    PACE_MODE = mode; if(!silent) sfxClick();
+    var chips = document.querySelectorAll('.pace-chip');
+    for(var i=0;i<chips.length;i++){ chips[i].classList.toggle('active', chips[i].getAttribute('data-pace') === mode); }
+    $('hud-pace-label').textContent = PACE_LABELS[mode];
+    if(T.active){ // rescale the clock in flight: keep the fraction used, recompute the total
+      var frac = T.elapsed / T.total;
+      T.total = T.base * paceMult();
+      T.elapsed = frac * T.total;
+    }
+    updateGateLabels();
+  };
+  function anyOverlayOpen(){ return $('pace-overlay').classList.contains('show') || $('teacher-overlay').classList.contains('show'); }
+  window.openPaceOverlay = function(){ sfxClick(); $('pace-overlay').classList.add('show'); };
+  window.closePaceOverlay = function(){ sfxClick(); $('pace-overlay').classList.remove('show'); };
+
+  // ---------- Shared timer (pauses while an overlay is open) ----------
+  var T = { active:false, base:0, total:0, elapsed:0, last:0, id:null, onTick:null, onExpire:null };
+  function startTimer(baseMs, onTick, onExpire){
+    stopTimer();
+    T.active = true; T.base = baseMs; T.total = baseMs * paceMult(); T.elapsed = 0; T.last = performance.now();
+    T.onTick = onTick; T.onExpire = onExpire;
+    T.id = setInterval(tickTimer, 50); tickTimer();
+  }
+  function tickTimer(){
+    var now = performance.now();
+    if(!anyOverlayOpen()){ T.elapsed += now - T.last; }
+    T.last = now;
+    var frac = Math.min(1, T.elapsed / T.total);
+    var bars = document.querySelectorAll('.screen.active .timerbar-inner');
+    for(var i=0;i<bars.length;i++){
+      bars[i].style.width = ((1-frac)*100) + '%';
+      bars[i].style.background = frac > 0.75 ? 'var(--red)' : (frac > 0.5 ? 'var(--yellow)' : 'var(--cyan)');
+    }
+    var secs = document.querySelectorAll('.screen.active .timer-secs');
+    var left = Math.max(0, Math.ceil((T.total - T.elapsed)/1000));
+    for(var k=0;k<secs.length;k++){ secs[k].textContent = left + ' SEC'; }
+    if(T.onTick){ T.onTick(frac); }
+    if(frac >= 1){ var cb = T.onExpire; stopTimer(); if(cb){ cb(); } }
+  }
+  function stopTimer(){ if(T.id){ clearInterval(T.id); } T.id = null; T.active = false; }
+  function timerFrac(){ return T.total ? Math.min(1, T.elapsed / T.total) : 0; }
+  function fracRemaining(){ return T.total ? Math.max(0, 1 - T.elapsed/T.total) : 0; }
+
+  // =========================================================
+  // CONTENT (only from the Themis Criminal Law outline, § III.A, plus its p. 6 mistake-of-fact example)
+  // =========================================================
+
+  // ---------- Level 1: larceny elements (shooter) ----------
+  var ELEM_OPTS = [
+    {k:'lar',   s:'LARCENY', label:'Larceny: every element is met'},
+    {k:'tres',  s:'NO TRESPASS', label:'No trespass: the owner consented to D having it'},
+    {k:'take',  s:'NO TAKING OR CARRYING AWAY', label:'No taking or carrying away'},
+    {k:'prop',  s:'NOT PERSONAL PROPERTY', label:'Not personal property'},
+    {k:'anoth', s:'NOT ANOTHER’S PROPERTY', label:'Not the property of another'}
+  ];
+  var ELEM_DATA = [
+    {text:"D picks up a wallet from a store counter and slides it three inches toward himself, intending to keep it. A clerk stops him before he can pocket it.", ans:'lar',
+     why:"Asportation is satisfied by even a slight movement of the property, e.g., inches. Every element is met."},
+    {text:"Out of spite, D smashes a vase that V is holding in her hands.", ans:'take',
+     why:"Per the outline, destroying property while it's in the owner's possession (e.g., breaking an object the owner is holding) is not a taking."},
+    {text:"D pretends to sell an innocent buyer a car that D doesn't own. After paying, the buyer drives the car away.", ans:'lar',
+     why:"The outline's example. Most jurisdictions impute the buyer's asportation to D, because the buyer acted at D's direction."},
+    {text:"D gets a massage and walks out without paying. Apply the MBE rule.", ans:'prop',
+     why:"The outline's exam note: services taken without paying (e.g., a massage) are not personal property for MBE purposes. Modern theft statutes usually criminalize theft of services separately."},
+    {text:"D saws down a tree in V's orchard and immediately hauls it away.", ans:'prop',
+     why:"Taking real property items (e.g., trees, unharvested crops) is not larceny when D's act of severance happens immediately before the carrying away."},
+    {text:"V picked her apples last week and stacked them in crates in her barn. D hauls the crates away.", ans:'lar',
+     why:"Once the owner has severed real property items from the land (e.g., picked apples), they become personal property, and carrying them away can be larceny."},
+    {text:"D and his brother jointly own a boat. D takes it from the brother's dock and keeps it.", ans:'anoth',
+     why:"A joint owner who takes the property from a co-owner isn't guilty of larceny, because the taker has an equal right to possess it."},
+    {text:"D owns a car and leases it to V for a year. Midway through the lease, D secretly takes the car back to sell it.", ans:'lar',
+     why:"The owner (the person with title) can commit larceny when someone else, e.g., a lessee, is entitled to current possession."},
+    {text:"T steals O's laptop. D then steals the laptop from T.", ans:'lar',
+     why:"Larceny can be committed against a thief, unless the taker has a superior possessory interest (e.g., the owner or a lessee). D has neither."},
+    {text:"O puts an old lamp at the curb with a sign reading “FREE,” giving up all rights to it. D takes it home.", ans:'anoth',
+     why:"Property its owner has abandoned, surrendering all rights to it, is not subject to larceny."},
+    {text:"D tells a neighbor's child that V's bike is D's and asks the child to fetch it from V's porch. The child, who believes D, brings it over.", ans:'lar',
+     why:"A taking occurs when D uses an agent to remove the property from the owner's possession. The agent doesn't need to know of D's criminal intent."},
+    {text:"D finds a wallet on the sidewalk with V's ID and address inside. On the spot, D decides to keep the cash.", ans:'lar',
+     why:"Lost property can be the subject of larceny if, when D finds it, D knows the owner or believes he can locate the owner, and D intends to permanently deprive the owner."},
+    {text:"V lends D her lawnmower for the weekend. On Sunday, D decides to sell it instead and does.", ans:'tres',
+     why:"The outline's exam tip: there can't be lawful entrustment by the owner in a larceny case. V consented to D having the mower, so this is embezzlement, not larceny."},
+    {text:"Without asking, D takes V's umbrella, planning to return it tomorrow. That night, D decides to keep it.", ans:'lar',
+     why:"The continuing-trespass rule. The original taking was wrongful, so the trespass continues until D forms the intent to steal, and larceny occurs then."},
+    {text:"A courier mistakenly hands D a package addressed to V. D notices the wrong name as he signs for it and decides right then to keep it.", ans:'lar',
+     why:"Mistakenly delivered property can be the subject of larceny when the recipient realizes the mistake at the time of receipt and intends to permanently deprive the owner."}
+  ];
+
+  // ---------- Level 2: intent to permanently deprive (catcher) ----------
+  var INTENT_DATA = [
+    {text:"D takes V's diamond ring, planning to return it only if V posts a reward.", cat:'yes',
+     why:"Intending to return property only upon receiving a reward is enough intent to permanently deprive."},
+    {text:"D finds V's lost dog, with V's address on its collar, and takes it home. D plans to return it and hopes V will offer a reward.", cat:'no',
+     why:"Intending to return property in the hope of a reward isn't larceny, unless D means to return it only if the reward is paid."},
+    {text:"D takes V's car to run an errand, planning to bring it right back. On the way home, D crashes and the car is totaled.", cat:'no',
+     why:"The outline's example. D intended only to borrow the car, and accidental damage or destruction doesn't change that."},
+    {text:"D takes V's bike, planning to ride it to the lake and then dump it in the water.", cat:'yes',
+     why:"Intending to throw away or abandon the property is an intent to permanently deprive."},
+    {text:"D takes V's guitar, planning to sell it back to V.", cat:'yes',
+     why:"Intending to sell the property back to the owner is sufficient intent."},
+    {text:"D takes V's watch and pawns it, knowing he'll never have the money to redeem it.", cat:'yes',
+     why:"Intending to pledge or pawn the property without being able to redeem it is an intent to permanently deprive."},
+    {text:"D, who has enough cash in his pocket to cover it, takes a shirt from a store display, fully intending to pay for it.", cat:'no',
+     why:"Intending to pay for merchandise that D has the means to buy is not the intent to steal."},
+    {text:"V's antique clock isn't for sale. D takes it anyway and leaves its fair price in cash on V's table.", cat:'yes',
+     why:"An intent to pay doesn't prevent larceny when the property is not offered for sale."},
+    {text:"V owes D $200. Honestly believing he's entitled to it as repayment, D takes $200 from V's desk drawer.", cat:'no',
+     why:"Taking property under an honest belief that it's repayment of a debt (a claim of right) is not larceny."},
+    {text:"D takes V's vintage car, meaning to return it after entering it in a demolition derby.", cat:'yes',
+     why:"There is sufficient intent when D intends to create a substantial risk of loss of the property."},
+    {text:"D takes V's watch, intending to keep it. The next morning, D feels guilty and returns it.", cat:'yes',
+     why:"The crime is complete at the time of the taking. There is no defense of restoration for a later change of heart."},
+    {text:"An athlete takes an expensive gold watch from a table, mistakenly thinking it's her own cheap plastic sports watch. The mistake was unreasonable.", cat:'no',
+     why:"The outline's mistake-of-fact example. Larceny is a specific-intent crime, and a mistake of fact is a defense to one even if it's unreasonable. She lacked the intent to steal."}
+  ];
+
+  // ---------- Level 3: the con game (shooter) ----------
+  var CON_OPTS = [
+    {k:'lar', s:'LARCENY', label:'Larceny'},
+    {k:'lbt', s:'LARCENY BY TRICK', label:'Larceny by trick'},
+    {k:'emb', s:'EMBEZZLEMENT', label:'Embezzlement'},
+    {k:'fp',  s:'FALSE PRETENSES', label:'False pretenses'},
+    {k:'none',s:'NO THEFT CRIME', label:'No theft crime'}
+  ];
+  var CON_DATA = [
+    {text:"D falsely tells V that he's a licensed mechanic so V will let him take her car for a “diagnostic drive.” V hands over the keys, and D sells the car.", ans:'lbt',
+     why:"V gave D possession, not title, because of D's false statement of a present fact. D then converted the car. That's larceny by trick."},
+    {text:"D tells V that a painting is a genuine Picasso, knowing it's a fake. Relying on that, V buys it and pays D $5,000.", ans:'fp',
+     why:"V passed title to the money in reliance on D's known false representation of a material present fact, made with intent to defraud."},
+    {text:"A bank teller pockets $300 from her cash drawer.", ans:'lar',
+     why:"A low-level employee has only custody of the employer's property; the employer keeps constructive possession. Low-level employees can only be guilty of larceny."},
+    {text:"A company's president secretly transfers company funds that she controls into her personal account.", ans:'emb',
+     why:"A high-level employee with greater authority over the employer's property may have possession, not mere custody, and is typically guilty of embezzlement."},
+    {text:"V leaves her car at D's repair shop. While it's there, D sells it to a buyer.", ans:'emb',
+     why:"D was in lawful possession of the car as a bailee and fraudulently converted it by selling it. Selling the property is a classic conversion."},
+    {text:"V hires D to ship a sealed crate. Intending to steal, D pries open the crate and takes the silverware inside.", ans:'lar',
+     why:"A bailee commits larceny when the bailee, with intent to steal, opens and takes property from the bailor's closed container."},
+    {text:"D rolls back the odometer on his car to make it look low-mileage. V buys the car in reliance on the reading.", ans:'fp',
+     why:"A representation can be made by actions, and the outline's example is resetting a car's odometer. Title passed in reliance on it."},
+    {text:"D tells V, “This is the best used car in Texas. You'll love it.” V buys it. The car turns out to be ordinary.", ans:'none',
+     why:"Sales talk or puffing is an opinion, not a false representation of fact, so it can't support false pretenses."},
+    {text:"D borrows $500 from V, promising to repay it next month. D never intended to repay.", ans:'none',
+     why:"Under the outline, a false promise is not a sufficient representation. It must be a material past or present fact."},
+    {text:"V mistakenly believes D's watch is solid gold. D didn't cause the mistake, owes V no fiduciary duty, and says nothing. V buys the watch.", ans:'none',
+     why:"Silence is not a representation, even when D knows of V's misunderstanding, unless D caused it or had a fiduciary obligation to V."},
+    {text:"D, holding V's ring for cleaning, wears it to a party. D fully intends to return that same ring the next day and is able to.", ans:'none',
+     why:"If D intends to return the exact property converted and can do so when the intent is formed, D lacks the intent to defraud required for embezzlement."},
+    {text:"D, a trustee, takes $1,000 in cash from the trust to cover a personal bill, planning to replace it with an equal amount next week.", ans:'emb',
+     why:"Intending to return similar property or the cash equivalent still supplies the intent to defraud for embezzlement."},
+    {text:"D borrows money from V under a valid loan. D loses his job and can't pay it back on time.", ans:'none',
+     why:"The property embezzled must belong to another. The inability to fulfill a contractual obligation, e.g., paying back a loan, is not embezzlement."},
+    {text:"D signs V's name to one of V's checks, payable to D, intending to cash it. D is arrested before he ever presents it. Has D committed forgery?",
+     opts:[{k:'a',s:'YES: COMPLETE ON MAKING',label:'Yes: forgery is complete upon the making'},{k:'b',s:'NO: NEVER USED IT',label:'No: D never used the check'},{k:'c',s:'NO: NO ONE DEFRAUDED',label:'No: no one was actually defrauded'},{k:'d',s:'NO: DOCUMENT IS REAL',label:'No: the check itself is a genuine document'}],
+     ans:'a', why:"Forgery is complete upon the making, and D need not use the document. Signing another person's name on a check makes the check itself false, and the intent to defraud is enough even if no one is defrauded."},
+    {text:"D paints a copy of a famous painting and signs the artist's name on it, intending to sell it as an original. Is the painting a forgery?",
+     opts:[{k:'a',s:'YES: FALSE SIGNATURE',label:'Yes: it carries a false signature'},{k:'b',s:'NO: NO LEGAL SIGNIFICANCE',label:'No: a painting lacks apparent legal significance'},{k:'c',s:'YES: INTENT TO DEFRAUD',label:'Yes: D intended to defraud a buyer'},{k:'d',s:'ONLY IF SOLD',label:'Only once D sells it'}],
+     ans:'b', why:"Forgery needs a writing with apparent legal significance, meaning value beyond its own existence. A contract, deed, will, or check qualifies; a painting does not. Selling it as an original could raise false pretenses instead."},
+    {text:"Under the MPC and many states' modern theft statutes, how are larceny, false pretenses, embezzlement, and receipt of stolen goods treated?",
+     opts:[{k:'a',s:'A SINGLE CRIME OF THEFT',label:'As a single statutory crime of theft'},{k:'b',s:'FOUR SEPARATE FELONIES',label:'As four separate felonies with the common-law elements'},{k:'c',s:'MISDEMEANORS ONLY',label:'As misdemeanors only'},{k:'d',s:'CIVIL WRONGS ONLY',label:'As civil wrongs, not crimes'}],
+     ans:'a', why:"The outline: the MPC and many states treat them as a single statutory crime of theft, expand property to cover intangibles, services, and documents, and require only unauthorized control over the property."}
+  ];
+
+  // ---------- Level 4: robbery and extortion (shooter) ----------
+  var ROB_OPTS = [
+    {k:'rob', s:'ROBBERY', label:'Robbery'},
+    {k:'lar', s:'LARCENY ONLY', label:'Larceny only'},
+    {k:'ext', s:'EXTORTION', label:'Extortion'},
+    {k:'none',s:'NO THEFT CRIME', label:'No theft crime'}
+  ];
+  var ROB_DATA = [
+    {text:"On a crowded train, D lifts V's wallet from her coat pocket. V never notices.", ans:'lar',
+     why:"A pickpocketing without the victim's knowledge isn't robbery. There's no force beyond what the taking itself required."},
+    {text:"D lifts V's wallet from her pocket. V feels it, grabs D's wrist, and hangs on. D shoves her away and runs off with the wallet.", ans:'rob',
+     why:"A pickpocketing becomes robbery when the victim notices the taking and resists, and D overcomes the resistance with force."},
+    {text:"D snatches V's purse from her arm and runs. V doesn't resist, and D uses no more force than it took to grab the purse.", ans:'lar',
+     why:"Most state courts that have considered it say purse-snatching is not robbery unless additional circumstances, e.g., resistance or greater force, transform it."},
+    {text:"D yanks V's purse so hard that V is knocked to the ground, then runs off with it.", ans:'rob',
+     why:"Knocking the victim down is greater force than needed to carry away the property, so the purse-snatching becomes robbery."},
+    {text:"D ties V to a chair in her living room, then goes upstairs and takes jewelry from her bedroom.", ans:'rob',
+     why:"When the victim is restrained in her home before the seizure, items taken from the entire house can be treated as taken from her presence."},
+    {text:"D points a gun at V and says, “Your wallet or your life.” V hands it over.", ans:'rob',
+     why:"A threat of immediate serious physical injury to the victim is intimidation. Larceny plus intimidation from V's person is robbery."},
+    {text:"D points a knife at V's young son, who is standing next to V, and demands V's car keys. V hands them over.", ans:'rob',
+     why:"Intimidation includes a threat of immediate serious physical injury to a close family member or another person present."},
+    {text:"D tells V, “Give me your watch, or I'll smash your car's windshield.” V gives D the watch.", ans:'ext',
+     why:"A threat to damage property other than the victim's home generally isn't intimidation for robbery. Taking property by threat fits the modern extortion statutes."},
+    {text:"D emails V: “Pay me $10,000 by next Friday, or I'll tell your spouse about your affair.” V hasn't paid. Assume a majority jurisdiction.", ans:'ext',
+     why:"Extortion threats need not be of immediate or physical harm. In most jurisdictions, making the threat is the essence of the crime, so it's complete without payment."},
+    {text:"D calls V: “Wire me $5,000, or next month I'll hurt your brother,” who lives in another city. V wires the money.", ans:'ext',
+     why:"The threat isn't of immediate harm, and the property wasn't on V or in V's presence. Those two differences make it extortion rather than robbery."},
+    {text:"D pockets a phone in a store without anyone noticing. In the parking lot, a guard grabs him, and D punches the guard to get away with the phone. Apply the modern trend.", ans:'rob',
+     why:"The common law requires the force before or at the time of the taking. The modern trend in many jurisdictions accepts force immediately following it, e.g., during escape."},
+    {text:"D punches V and takes her wallet. The prosecutor charges battery, larceny, and robbery. What is the highest crime D can be convicted of, and what happens to the others?",
+     opts:[{k:'a',s:'ROBBERY: THE REST MERGE',label:'Robbery; larceny and battery merge into it'},{k:'b',s:'ALL THREE CRIMES',label:'All three: robbery, larceny, and battery'},{k:'c',s:'LARCENY AND BATTERY',label:'Larceny and battery, but not robbery'},{k:'d',s:'BATTERY ONLY',label:'Battery only'}],
+     ans:'a', why:"The outline's exam note: larceny, assault, and battery all merge into robbery or attempted robbery. The MBE often tests this by asking for the highest crime D can be convicted of."},
+    {text:"At common law, what was extortion?",
+     opts:[{k:'a',s:'TAKING BY A GOV’T OFFICER',label:'The unlawful taking of money by a government officer'},{k:'b',s:'ANY TAKING BY THREAT',label:'Any taking of property by threat'},{k:'c',s:'ROBBERY WITHOUT A WEAPON',label:'Robbery without a weapon'},{k:'d',s:'WRITTEN THREATS ONLY',label:'Threats sent in writing only'}],
+     ans:'a', why:"At common law, extortion was the unlawful taking of money by a government officer. Modern statutes broadened it to taking money or property from another by threat."}
+  ];
+
+  // ---------- Level 5: receiving stolen property (catcher) ----------
+  var RSP_DATA = [
+    {text:"D buys a TV from a friend, knowing the friend took it in a burglary. D plans to keep it.", cat:'yes',
+     why:"D received control of stolen property, knowing it was stolen, intending to permanently deprive the owner. Every element is met."},
+    {text:"D buys a TV, honestly believing the seller owns it. A week later D learns it was stolen and keeps it anyway.", cat:'no',
+     why:"Knowledge that the property is stolen must coincide with the act of receiving it. D learned too late for receiving stolen property."},
+    {text:"Same facts, but the jurisdiction's statute is “possession of stolen property.” D learned it was stolen a week after buying it and kept it.", cat:'yes',
+     why:"Some jurisdictions frame the crime as possession of stolen property, which doesn't require the knowledge to coincide with receipt."},
+    {text:"A thief asks D to hide stolen jewels in D's storage locker. Knowing they're stolen, D agrees, and D holds the only key. D never touches the jewels.", cat:'yes',
+     why:"Only control, not possession, is necessary. D controls the locker and the jewels in it, knowing they're stolen and helping keep them from the owner."},
+    {text:"D's friend gets a laptop from V by lying to her about a material fact, so V passes title. Knowing how the friend got it, D takes the laptop to keep.", cat:'yes',
+     why:"“Stolen” includes property unlawfully obtained through false pretenses (and larceny or embezzlement)."},
+    {text:"Modern-view jurisdiction. A stranger sells D a $2,000 bike for $20 in an alley, its serial number filed off. D insists he didn't realize it was stolen.", cat:'yes',
+     why:"Under the modern view, knowledge can be inferred from facts that would alert a reasonable person to the unlawful acquisition of the property."},
+    {text:"Traditional jurisdiction. Same alley sale of a $2,000 bike for $20, but D honestly, if foolishly, didn't realize it was stolen.", cat:'no',
+     why:"Traditionally, D must have actual subjective knowledge that the property was stolen. Honest ignorance, however careless, means no conviction."},
+    {text:"D knowingly takes a stolen car from the thief, intending to drive it straight back to its owner.", cat:'no',
+     why:"Receiving stolen property requires the intent to permanently deprive the owner. D meant to return the car."},
+    {text:"D buys a ring from a friend, believing the friend stole it. In fact, the friend bought it lawfully.", cat:'no',
+     why:"The property must actually have been stolen at the time it is received. This ring never was."}
+  ];
+
+  // ---------- Boss: burglary (ladder; top rung first) ----------
+  var BURG_RUNGS = [
+    {k:'all',   label:'BURGLARY: every element holds'},
+    {k:'intent',label:'Intent to commit a felony inside'},
+    {k:'night', label:'At nighttime'},
+    {k:'other', label:'Of another'},
+    {k:'dwell', label:'Dwelling'},
+    {k:'enter', label:'Entering'},
+    {k:'break', label:'Breaking'}
+  ];
+  var BURG_DATA = [
+    {text:"At midnight, D walks through V's wide-open front door, intending to steal V's TV.", ans:'break',
+     why:"Entering through an open door or window isn't a breaking unless the opening must be enlarged to allow the entry. (Most states today require only an entry.)"},
+    {text:"At 11 p.m., D pushes open V's closed but unlocked bedroom window and climbs in to steal jewelry.", ans:'all',
+     why:"The force used to break may be slight, such as opening an unlocked door or window. Every other element holds, so this is common-law burglary."},
+    {text:"At 2 a.m., D pries open V's kitchen window and reaches one hand inside to grab a laptop from the counter, intending to steal it.", ans:'all',
+     why:"Entering occurs when any part of D's body, e.g., a hand through a window, crosses into the dwelling through the opening D created."},
+    {text:"At 2 a.m., D kicks in V's front door, intending to steal. Hearing sirens, D runs before any part of his body or any tool crosses the threshold.", ans:'enter',
+     why:"The breaking happened, but nothing of D's, body or instrument, crossed into the dwelling. Without an entry, there's no burglary."},
+    {text:"At midnight, D breaks into a closed, empty warehouse to steal tools.", ans:'dwell',
+     why:"At common law, a dwelling is a structure regularly occupied for habitation. A warehouse isn't one, though all states have statutes covering nondwellings like businesses."},
+    {text:"In January, at night, D breaks into V's summer cabin, which V's family lives in every summer, to steal a TV. No one is there.", ans:'all',
+     why:"A dwelling need not be occupied at the time of the breaking. A home regularly lived in for part of the year isn't abandoned."},
+    {text:"At night, D breaks into a boarded-up farmhouse that no one has lived in for twenty years, intending to steal the copper pipes.", ans:'dwell',
+     why:"The structure must not be abandoned. A long-abandoned farmhouse isn't a dwelling."},
+    {text:"At 1 a.m., D breaks a window of his own house and climbs in, intending to kill his houseguest, who is asleep inside.", ans:'other',
+     why:"The dwelling must be that of another person. A person can't burglarize his own dwelling."},
+    {text:"D owns a house and rents it to V. One night, while V is away, D breaks in to steal V's stereo.", ans:'all',
+     why:"An owner who has transferred the possessory interest to someone else, e.g., a tenant, can be guilty of burglary."},
+    {text:"At noon, D breaks into V's house through a back window, intending to steal V's laptop.", ans:'night',
+     why:"Common-law burglary requires nighttime, the period of darkness between sunset and sunrise. Only a very few states still require it, though many punish nighttime burglaries more severely."},
+    {text:"Just after sunset, with enough natural daylight left that a neighbor can clearly see D's face, D breaks into V's house to steal.", ans:'night',
+     why:"It isn't considered nighttime if there is enough natural daylight to see the burglar's face."},
+    {text:"On a freezing night, D breaks into V's house only to get warm. Once inside, D decides to steal V's coat and takes it.", ans:'intent',
+     why:"The intent to commit a felony must exist at the time of the breaking and entering. D formed it later, so this is larceny, not common-law burglary."},
+    {text:"At night, D breaks into V's house intending to steal, finds nothing worth taking, and leaves empty-handed.", ans:'all',
+     why:"Failing to commit the underlying felony doesn't defeat burglary. D may be guilty of burglary and attempted larceny."},
+    {text:"V invites D in for dinner at 8 p.m., after dark. During the meal, D slips upstairs and opens a closed bedroom closet door to steal the fur coat inside, as he'd planned all along.", ans:'all',
+     why:"Even when entry is gained with consent, breaking into a part of the dwelling structure, such as a closet door or wall safe, can be a breaking."},
+    {text:"V invites D in for dinner at 8 p.m., after dark. During the meal, D slips into V's study and opens a desk drawer to steal the cash inside, as he'd planned all along.", ans:'break',
+     why:"Merely opening an object within the dwelling, such as a desk drawer, trunk, or box, is not a breaking. D entered with V's consent."},
+    {text:"At 10 p.m., D knocks and falsely tells V he's from the gas company, there to check a leak. V opens the door, and D comes in intending to rob V.", ans:'all',
+     why:"If entry is obtained by fraud or threat, there is a breaking. Consent obtained by fraud doesn't prevent one."}
+  ];
+
+  // ---------- Level definitions ----------
+  var CATCH = {
+    2:{data:INTENT_DATA, title:'LEVEL 2: BORROW OR STEAL', left:'◀ INTENT<br>TO STEAL', right:'NO INTENT<br>TO STEAL ▶', yes:'Intent to steal', no:'No intent to steal'},
+    5:{data:RSP_DATA, title:'LEVEL 5: FENCE PATROL', left:'◀ GUILTY OF<br>RECEIVING', right:'NOT<br>GUILTY ▶', yes:'Guilty of receiving stolen property', no:'Not guilty'}
+  };
+  var LV = {
+    1:{name:'Five-Finger Invaders', label:'Level 1 (Five-Finger Invaders)', sec:25, pts:100, pool:ELEM_DATA, draw:12,
+       recap:"Larceny is the trespassory taking and carrying away of the personal property of another with intent to permanently deprive. Caption can happen through an agent, and asportation needs only slight movement. Services, intangibles, and real property items severed immediately before being carried away aren't personal property. Abandoned property and property a joint owner takes aren't another's property, but an owner can steal from a lessee and anyone can steal from a thief. Lost and mistakenly delivered property can be stolen, and the continuing-trespass rule covers a wrongful taking followed by a later intent to steal.",
+       terms:"trespass; caption; asportation; innocent agent; personal property; severance; services; joint owners; lessee; abandoned vs. lost property; mistaken delivery; continuing trespass"},
+    2:{name:'Borrow or Steal', label:'Level 2 (Borrow or Steal)', sec:18, pts:100, pool:INTENT_DATA, draw:11,
+       recap:"Larceny is a specific-intent crime, and the intent to permanently deprive is measured at the time of the taking. Intending to abandon, sell back, pawn without the ability to redeem, return only for a reward, or create a substantial risk of loss is enough. Intending to borrow with the ability to return, to pay for goods offered for sale, or to collect a debt under a claim of right is not. Returning the property later is no defense, and even an unreasonable mistake of fact negates the intent.",
+       terms:"specific intent; intent to permanently deprive; borrowing; rewards; sale back to owner; pawn; claim of right; substantial risk of loss; no restoration defense; mistake of fact"},
+    3:{name:'The Con Game', label:'Level 3 (The Con Game)', sec:30, pts:100, pool:CON_DATA, draw:12,
+       recap:"Embezzlement is the fraudulent conversion of another's property by someone in lawful possession, while larceny needs a trespassory taking: low-level employees have custody, high-level employees may have possession, and a bailee who breaks open a closed container commits larceny. Larceny by trick gets possession by fraud, and false pretenses gets title. Both need a false representation of material past or present fact, so puffing, false promises, and most silence don't count. Forgery is the making of a false writing with apparent legal significance and intent to defraud. The MPC and many states fold the theft crimes into one statutory crime of theft.",
+       terms:"embezzlement; conversion; custody vs. possession; bailee; larceny by trick; false pretenses; title vs. possession; material past or present fact; puffing; silence; forgery; consolidated theft"},
+    4:{name:'Stick-Up Squadron', label:'Level 4 (Stick-Up Squadron)', sec:25, pts:100, pool:ROB_DATA, draw:11,
+       recap:"Robbery is larceny from the victim's person or presence by force or intimidation. Slight force is enough, but it must exceed what the taking itself requires, which is why most pickpocketings and purse-snatchings are only larceny. Intimidation is a threat of immediate serious physical injury to the victim, a close family member, or someone present. Common law requires the force before or during the taking; the modern trend accepts force immediately after. Larceny, assault, and battery merge into robbery. Extortion, which at common law was a taking by a government officer, now covers threats that need not be immediate or physical, and in most jurisdictions the threat completes the crime.",
+       terms:"robbery; presence; force; intimidation; pickpocket; purse-snatching; force during escape; merger; extortion (common law and modern); making the threat"},
+    5:{name:'Fence Patrol', label:'Level 5 (Fence Patrol)', sec:18, pts:100, pool:RSP_DATA, draw:9,
+       recap:"Receiving stolen property requires receiving control of property that is stolen at the time, knowing it is stolen, with intent to permanently deprive the owner. Control, not possession, is enough. Traditionally D needs actual subjective knowledge at the moment of receipt; the modern view lets knowledge be inferred from facts that would alert a reasonable person, and possession-of-stolen-property statutes don't require the knowledge to coincide with receipt.",
+       terms:"receiving stolen property; control vs. possession; knowledge coinciding with receipt; actual subjective knowledge; modern inferred knowledge; possession of stolen property; intent to permanently deprive"},
+    6:{name:'The Break-In', label:'the Boss Round (The Break-In)', sec:40, pts:150, pool:BURG_DATA, draw:12,
+       recap:"Common-law burglary is the breaking and entering of the dwelling of another at nighttime with the specific intent to commit a felony inside. Slight force, fraud, or threat can be a breaking, but walking through an open door, opening a desk drawer, or forcing an exit isn't. Any part of the body or an entry instrument crossing in is an entry. A dwelling is regularly occupied for habitation and not abandoned, and an owner who has given possession to a tenant can burglarize it. Nighttime fails if there's enough daylight to see the burglar's face. The intent must exist at entry, the felony need not be completed, and a completed felony doesn't merge. Modern statutes relax nearly every element.",
+       terms:"breaking (force, fraud, consent, interior breaking); entering; dwelling; abandonment; of another; landlord and tenant; nighttime; specific intent at entry; no merger; modern burglary statutes"}
+  };
+  function levelItemCount(n){ return Math.min(LV[n].draw, LV[n].pool.length); }
+  function drawItems(n){ return shuffle(LV[n].pool).slice(0, levelItemCount(n)); }
+  function l1BaseMs(idx){ return Math.max(14000, 18000 - idx*400); }
+  function updateGateLabels(){
+    var spans = document.querySelectorAll('.gate-secs');
+    for(var i=0;i<spans.length;i++){
+      var n = parseInt(spans[i].getAttribute('data-level'),10);
+      if(CATCH[n]){ spans[i].textContent = '(CARDS FALL IN ' + Math.round(18*paceMult()) + '→' + Math.round(14*paceMult()) + ' SEC)'; }
+      else { spans[i].textContent = '(' + Math.round(LV[n].sec*paceMult()) + ' SEC PER ' + (n===6 ? 'CLIMB' : 'WAVE') + ')'; }
+    }
+  }
+
+  // ---------- Ranks ----------
+  var RANKS = [
+    {label:'CURBSIDE SCAVENGER', min:0, max:5999, meaning:"You know abandoned property when you see it. The rest of the theft family tree still needs work."},
+    {label:'PICKPOCKET', min:6000, max:8999, meaning:"Quick hands on the basics, but no force behind them yet. The fraud crimes and the burglary elements need another pass."},
+    {label:'SAFECRACKER', min:9000, max:11999, meaning:"You can tell possession from title and a breaking from a walk-in. Solid command of the property crimes."},
+    {label:'MASTER OF ASPORTATION', min:12000, max:null, meaning:"Named for larceny's carrying-away element, which even a few inches of movement satisfies. You moved this material a lot further than that."}
+  ];
+  function rankFor(score){ for(var i=RANKS.length-1;i>=0;i--){ if(score >= RANKS[i].min) return RANKS[i]; } return RANKS[0]; }
+  function fmt(n){ return n.toLocaleString(); }
+  function rangeStr(r){ return r.max === null ? (fmt(r.min) + '+ pts') : (fmt(r.min) + '–' + fmt(r.max) + ' pts'); }
+  function renderRankTable(score){
+    var mine = rankFor(score);
+    var html = '<p class="body-text small center" style="margin-top:0;">Your score: <b>' + fmt(score) + ' pts</b>. The ranges below are the totals needed for each rank; yours is highlighted.</p>';
+    RANKS.forEach(function(r){
+      var a = (r === mine);
+      html += '<div class="rank-row' + (a ? ' achieved' : '') + '"><span>' + (a ? '▶ YOUR RANK: ' : '') + esc(r.label) + '</span><span>' + rangeStr(r) + '</span></div>' +
+              '<div class="rank-meaning">' + esc(r.meaning) + '</div>';
+    });
+    return html;
+  }
+
+  // ---------- Scoring ----------
+  function initLevelStats(n){ state.stats[n] = {correct:0, answered:0, skipped:0, total:levelItemCount(n)}; state.levelMistakes = 0; state.bonusStreak = 0; }
+  function grantLife(reason){
+    if(state.lives < MAX_LIVES){ state.lives++; updateHud(); playExtraLifeJingle(); flashText(reason + ' +1 LIFE', '#39ff88'); }
+    else { addScore(250); sfxCorrect(); flashText(reason + ' +250', '#39ff88'); }
+  }
+  function recordResult(correct, skipped, bonusFrac){
+    var st = state.stats[state.level];
+    if(skipped){ st.skipped++; return 0; }
+    st.answered++;
+    if(correct){
+      st.correct++;
+      var pts = LV[state.level].pts + Math.round(50 * (bonusFrac === undefined ? fracRemaining() : bonusFrac));
+      addScore(pts); sfxCorrect();
+      state.streak++; state.bonusStreak++;
+      if(state.streak > state.bestStreak) state.bestStreak = state.streak;
+      if(state.bonusStreak >= STREAK_FOR_LIFE){ state.bonusStreak = 0; setTimeout(function(){ grantLife('HOT STREAK'); }, 350); }
+      else { flashText('+' + pts, '#39ff88'); }
+      updateHud();
+      return pts;
+    }
+    state.streak = 0; state.bonusStreak = 0; state.levelMistakes++;
+    sfxWrong();
+    if(!teacher){
+      state.lives--; updateHud();
+      if(state.lives <= 0){ state.pendingGameOver = true; }
+      flashText('-1 LIFE', '#ff4b5c');
+    } else { updateHud(); flashText('MISS (TEACHER)', '#ff3ec8'); }
+    return 0;
+  }
+  function streakText(){ return 'STREAK ' + state.streak + ' · ' + (STREAK_FOR_LIFE - state.bonusStreak) + ' MORE IN A ROW FOR AN EXTRA LIFE'; }
+  function verdictHtml(correct, skipped, timedOut, pts, ansLabel, why){
+    var v = skipped ? 'ANSWER REVEALED' : correct ? ('CORRECT +' + pts) : (timedOut ? "TIME'S UP" : 'NOT QUITE');
+    return '<span class="verdict">' + v + '</span>' + (correct ? '' : '<b>Answer: ' + esc(ansLabel) + '.</b> ') + why;
+  }
+
+  // ---------- Flow ----------
+  window.goToBriefing = function(){ sfxClick(); playStartJingle(); showScreen('screen-briefing'); };
+  window.startLevel = function(n){
+    sfxClick(); stopAll(); state.level = n; initLevelStats(n); updateHud(); updateGateLabels();
+    showScreen('screen-intro' + n);
+  };
+  window.beginLevel = function(n){
+    sfxClick();
+    if(CATCH[n]){ l1Start(n); } else if(n === 6){ ladderStart(); } else { shStart(n); }
+  };
+  function stopAll(){ stopTimer(); SH.running = false; }
+
+  // =========================================================
+  // LEVEL 1: CATCHER
+  // =========================================================
+  var l1Order = [], l1Idx = 0, l1Resolved = true, l1Pos = 'mid', l1Slamming = false, l1SlamFrac = 0;
+  function l1Start(n){
+    var C = CATCH[n];
+    l1Order = drawItems(n); l1Idx = -1;
+    $('fall-title').textContent = C.title;
+    $('bin-left').innerHTML = C.left; $('bin-right').innerHTML = C.right;
+    showScreen('screen-fall'); l1Next();
+  }
+  function l1PlaceCatcher(){
+    var c = $('catcher');
+    c.style.left = l1Pos === 'left' ? '5%' : (l1Pos === 'right' ? '59%' : '32%');
+    var card = $('fall-card');
+    if(!l1Resolved){ card.style.left = l1Pos === 'left' ? '30%' : (l1Pos === 'right' ? '70%' : '50%'); }
+  }
+  function l1Move(dir){
+    if(l1Resolved) return;
+    if(dir === 'left'){ l1Pos = (l1Pos === 'right') ? 'mid' : 'left'; }
+    else { l1Pos = (l1Pos === 'left') ? 'mid' : 'right'; }
+    sfxStep(); l1PlaceCatcher();
+  }
+  function l1CardTop(frac){
+    var zone = $('fall-zone'), c = $('fall-card');
+    var maxTop = Math.max(0, zone.clientHeight - 66 - 14 - c.offsetHeight);
+    c.style.top = (frac * maxTop) + 'px';
+  }
+  window.l1Next = function(){
+    if(state.pendingGameOver){ triggerGameOver(); return; }
+    l1Idx++;
+    if(l1Idx >= l1Order.length){ finishLevel(state.level); return; }
+    var item = l1Order[l1Idx];
+    var card = $('fall-card');
+    card.className = ''; card.innerHTML = item.text; card.style.top = '0px';
+    l1Pos = 'mid'; l1Resolved = false; l1Slamming = false;
+    l1PlaceCatcher();
+    $('fall-progress').textContent = 'CARD ' + (l1Idx+1) + '/' + l1Order.length;
+    $('fall-why').className = 'why-box'; $('fall-why').innerHTML = '';
+    $('fall-next-row').style.display = 'none';
+    $('fall-skip').disabled = false;
+    $('fall-streak').textContent = streakText();
+    $('fall-zone').scrollIntoView({behavior:'smooth', block:'center'});
+    startTimer(l1BaseMs(l1Idx), function(frac){ if(!l1Slamming) l1CardTop(frac); }, function(){ l1Resolve(l1Pos); });
+  };
+  window.l1Slam = function(side){
+    if(l1Resolved || l1Slamming) return;
+    if(side){ l1Pos = side; l1PlaceCatcher(); }
+    l1Slamming = true; l1SlamFrac = fracRemaining(); stopTimer();
+    beep(300,0.15,'square');
+    var start = parseFloat($('fall-card').style.top) || 0, t0 = performance.now();
+    var zone = $('fall-zone'), c = $('fall-card');
+    var end = Math.max(0, zone.clientHeight - 66 - 14 - c.offsetHeight);
+    (function anim(now){
+      var p = Math.min(1, (now - t0)/220);
+      c.style.top = (start + (end-start)*p) + 'px';
+      if(p < 1){ requestAnimationFrame(anim); } else { l1Resolve(l1Pos, l1SlamFrac); }
+    })(t0);
+  };
+  window.l1Resolve = function(pos, bonusFrac){
+    if(l1Resolved) return;
+    l1Resolved = true; stopTimer();
+    var item = l1Order[l1Idx];
+    var skipped = pos === '__skip';
+    var choice = pos === 'left' ? 'yes' : (pos === 'right' ? 'no' : null);
+    var correct = !skipped && choice === item.cat;
+    var pts = recordResult(correct, skipped, bonusFrac === undefined ? 0 : bonusFrac);
+    $('fall-skip').disabled = true;
+    $('fall-card').className = (correct || skipped) ? 'ok' : 'bad';
+    if(!correct && !skipped) sfxBoom();
+    var ansLabel = item.cat === 'yes' ? CATCH[state.level].yes : CATCH[state.level].no;
+    var w = $('fall-why');
+    w.className = 'why-box ' + ((correct || skipped) ? 'ok' : 'bad');
+    var v = skipped ? 'ANSWER REVEALED' : correct ? ('CAUGHT IT! +' + pts) : (choice === null ? 'FELL BETWEEN THE BINS' : 'WRONG BIN');
+    w.innerHTML = '<span class="verdict">' + v + '</span>' + (correct ? '' : '<b>Answer: ' + ansLabel + '.</b> ') + item.why;
+    var last = l1Idx >= l1Order.length - 1;
+    $('fall-next').textContent = state.pendingGameOver ? 'GAME OVER ▶' : (last ? 'FINISH LEVEL ▶' : 'NEXT CARD ▶');
+    $('fall-next-row').style.display = 'block';
+    $('fall-streak').textContent = streakText();
+    w.scrollIntoView({behavior:'smooth', block:'nearest'});
+  };
+  $('fall-zone').addEventListener('click', function(e){
+    if(l1Resolved) return;
+    var r = this.getBoundingClientRect();
+    l1Slam((e.clientX - r.left) < r.width/2 ? 'left' : 'right');
+  });
+
+  // =========================================================
+  // SHOOTER (Levels 2, 3, 4, Boss)
+  // =========================================================
+  var SH = { running:false, resolved:true, ship:{x:360, tx:null}, bullet:null, targets:[], fx:[], stars:[], keys:{}, autoFire:null,
+    items:[], ci:0, si:0, step:null, bossHits:0, t0:0, theme:null, ansKey:null, chosen:null };
+  var THEMES = {
+    1:{title:'LEVEL 1: FIVE-FINGER INVADERS', color:'#39ff88', shape:'invader', sway:0.55},
+    3:{title:'LEVEL 3: THE CON GAME', color:'#4bf3ff', shape:'link', sway:0.45},
+    4:{title:'LEVEL 4: STICK-UP SQUADRON', color:'#ff9a3b', shape:'flame', sway:0.6}
+  };
+  var cv = $('shoot-canvas'), cx = cv.getContext('2d');
+  var W = cv.width, H = cv.height, GROUND = H - 46;
+  for(var si0=0; si0<70; si0++){ SH.stars.push({x:Math.random()*W, y:Math.random()*H, s:Math.random()*1.6+0.3, v:Math.random()*0.4+0.1}); }
+
+  function shSteps(n, item){
+    var def = {1:{opts:ELEM_OPTS, q:'Is it larceny? If not, shoot the element that fails.'},
+               3:{opts:CON_OPTS, q:'Shoot the crime these facts show.'},
+               4:{opts:ROB_OPTS, q:'Shoot the most serious theft crime D can be convicted of.'}}[n];
+    return [{q:item.opts ? 'Shoot the correct answer.' : def.q, opts:item.opts || def.opts, ans:item.ans, why:item.why}];
+  }
+  function shStart(n){
+    SH.items = drawItems(n);
+    SH.ci = 0; SH.si = -1; SH.theme = THEMES[n]; SH.bossHits = 0;
+    $('shoot-title').textContent = SH.theme.title;
+    $('shoot-title').style.color = SH.theme.boss ? 'var(--red)' : '';
+    $('boss-hp-wrap').classList.toggle('show', !!SH.theme.boss);
+    $('boss-hp-fill').style.width = '100%';
+    showScreen('screen-shoot');
+    SH.running = true; SH.loopId = (SH.loopId||0) + 1; var lid = SH.loopId; requestAnimationFrame(function(){ shLoop(lid); });
+    shNextStep();
+  }
+  function wrapLines(text, maxW){
+    var words = text.split(' '), lines = [], cur = '';
+    words.forEach(function(w){
+      var test = cur ? cur + ' ' + w : w;
+      if(cx.measureText(test).width > maxW && cur){ lines.push(cur); cur = w; } else { cur = test; }
+    });
+    if(cur) lines.push(cur);
+    return lines;
+  }
+  function shBuildTargets(opts){
+    // One row (staggered vertically) so no target ever blocks the line of fire to another.
+    var n = opts.length, gap = 14;
+    var tw = Math.min(210, Math.floor((W - 40 - (n-1)*gap) / n));
+    cx.font = 'bold 13px "Courier New", monospace';
+    var letters = 'ABCDE', targets = [], maxLines = 1;
+    var order = shuffle(opts.map(function(_,i){ return i; }));
+    var rowW = n*tw + (n-1)*gap;
+    order.forEach(function(oi, idx){
+      var o = opts[oi];
+      var lines = wrapLines(letters[idx] + ': ' + (o.s || o.label), tw - 14);
+      maxLines = Math.max(maxLines, lines.length);
+      targets.push({k:o.k, letter:letters[idx], label:o.label, lines:lines,
+        rx:(W - rowW)/2 + idx*(tw+gap), ry:(idx % 2) * 34, w:tw, state:'live'});
+    });
+    var th = Math.max(54, maxLines*15 + 22);
+    targets.forEach(function(g){ g.h = th; });
+    return targets;
+  }
+  function shLayout(){ // current formation offset
+    var t = (performance.now() - SH.t0)/1000;
+    var minX = Infinity, maxX = -Infinity, maxY = 0;
+    SH.targets.forEach(function(g){ minX = Math.min(minX, g.rx); maxX = Math.max(maxX, g.rx + g.w); maxY = Math.max(maxY, g.ry + g.h); });
+    var amp = Math.max(0, (W - (maxX - minX))/2 - 8);
+    var freq = SH.theme.sway / paceMult();
+    var ox = SH.resolved ? SH.frozenOx : Math.sin(t * freq) * amp;
+    var top = SH.theme.boss ? 78 : 14;
+    var oy = top + timerFrac() * (GROUND - 10 - maxY - top);
+    if(SH.resolved) oy = SH.frozenOy;
+    return {ox:ox, oy:oy};
+  }
+  function shNextStep(){
+    var steps;
+    SH.si++;
+    if(SH.si >= shSteps(state.level, SH.items[SH.ci]).length){ SH.si = 0; SH.ci++; }
+    if(SH.ci >= SH.items.length){ finishLevel(state.level); return; }
+    steps = shSteps(state.level, SH.items[SH.ci]);
+    SH.step = steps[SH.si];
+    var item = SH.items[SH.ci];
+    $('shoot-progress').textContent = 'CASE ' + (SH.ci+1) + '/' + SH.items.length;
+    $('shoot-step').textContent = steps.length > 1 ? ('WAVE ' + (SH.si+1) + '/' + steps.length) : '';
+    $('shoot-text').innerHTML = item.text;
+    $('shoot-q').textContent = SH.step.q;
+    SH.targets = shBuildTargets(SH.step.opts);
+    var leg = $('shoot-legend'); leg.innerHTML = '';
+    SH.targets.forEach(function(g){
+      var li = document.createElement('li'); li.setAttribute('data-k', g.k);
+      li.innerHTML = '<b>' + g.letter + '</b> · ' + esc(g.label);
+      leg.appendChild(li);
+    });
+    SH.bullet = null; SH.fx = []; SH.autoFire = null; SH.chosen = null; SH.resolved = false; SH.t0 = performance.now();
+    $('shoot-why').className = 'why-box'; $('shoot-why').innerHTML = '';
+    $('shoot-next-row').style.display = 'none';
+    $('shoot-skip').disabled = false;
+    $('shoot-streak').textContent = streakText();
+    $('shoot-progress').scrollIntoView({behavior:'smooth', block:'start'});
+    startTimer(LV[state.level].sec * 1000, null, function(){ shResolve(null); });
+  }
+  function shFire(){
+    if(SH.resolved || SH.bullet || anyOverlayOpen()) return;
+    SH.bullet = {x:SH.ship.x, y:GROUND - 18};
+    sfxLaser();
+  }
+  function shAimAt(k){
+    if(SH.resolved) return;
+    var L = shLayout();
+    SH.targets.forEach(function(g){ if(g.k === k){ SH.ship.tx = L.ox + g.rx + g.w/2; SH.autoFire = k; } });
+  }
+  function explode(x, y, color){
+    for(var i=0;i<26;i++){ var a = Math.random()*Math.PI*2, sp = Math.random()*4+1;
+      SH.fx.push({x:x, y:y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, life:40, c:color}); }
+  }
+  window.shResolve = function(k){
+    if(SH.resolved) return;
+    var L = shLayout();
+    SH.frozenOx = L.ox; SH.frozenOy = L.oy;
+    SH.resolved = true; stopTimer();
+    var skipped = k === '__skip', correct = !skipped && k === SH.step.ans;
+    var pts = recordResult(correct, skipped);
+    var ansLabel = '';
+    SH.targets.forEach(function(g){
+      if(g.k === SH.step.ans){ g.state = 'correct'; ansLabel = g.letter + ': ' + g.label; if(correct) explode(L.ox+g.rx+g.w/2, L.oy+g.ry+g.h/2, '#39ff88'); }
+      else if(g.k === k){ g.state = 'wrong'; explode(L.ox+g.rx+g.w/2, L.oy+g.ry+g.h/2, '#ff4b5c'); }
+      else { g.state = 'dead'; }
+    });
+    if(k === null){ explode(SH.ship.x, GROUND, '#ff4b5c'); }
+    if(!correct && !skipped) sfxBoom();
+    var lis = $('shoot-legend').querySelectorAll('li');
+    for(var i=0;i<lis.length;i++){
+      var lk = lis[i].getAttribute('data-k');
+      if(lk === SH.step.ans) lis[i].classList.add('correct'); else if(lk === k) lis[i].classList.add('incorrect');
+    }
+    if(SH.theme.boss && (correct || skipped)){
+      SH.bossHits++;
+      $('boss-hp-fill').style.width = Math.max(0, 100 - SH.bossHits/SH.items.length*100) + '%';
+    }
+    $('shoot-skip').disabled = true;
+    var w = $('shoot-why');
+    w.className = 'why-box ' + ((correct || skipped) ? 'ok' : 'bad');
+    w.innerHTML = verdictHtml(correct, skipped, k === null, pts, ansLabel, SH.step.why);
+    var steps = shSteps(state.level, SH.items[SH.ci]);
+    var lastStep = SH.si >= steps.length - 1, lastCard = SH.ci >= SH.items.length - 1;
+    $('shoot-next').textContent = state.pendingGameOver ? 'GAME OVER ▶' :
+      (!lastStep ? 'NEXT WAVE ▶' : (lastCard ? 'FINISH LEVEL ▶' : 'NEXT CASE ▶'));
+    $('shoot-next-row').style.display = 'block';
+    $('shoot-streak').textContent = streakText();
+    w.scrollIntoView({behavior:'smooth', block:'nearest'});
+  };
+  window.shNext = function(){
+    sfxClick();
+    if(state.pendingGameOver){ triggerGameOver(); return; }
+    shNextStep();
+  };
+  function rr(x,y,w,h,r){ cx.beginPath(); cx.moveTo(x+r,y); cx.arcTo(x+w,y,x+w,y+h,r); cx.arcTo(x+w,y+h,x,y+h,r); cx.arcTo(x,y+h,x,y,r); cx.arcTo(x,y,x+w,y,r); cx.closePath(); }
+  function drawTarget(g, x, y){
+    var col = g.state === 'correct' ? '#39ff88' : (g.state === 'wrong' ? '#ff4b5c' : SH.theme.color);
+    if(g.state === 'dead'){ cx.globalAlpha = 0.25; }
+    var shape = SH.theme.shape;
+    cx.lineWidth = 3; cx.strokeStyle = col; cx.fillStyle = '#120d1a';
+    if(shape === 'link'){ rr(x, y, g.w, g.h, 32); cx.fill(); cx.stroke(); cx.lineWidth = 1; rr(x+6, y+6, g.w-12, g.h-12, 26); cx.stroke(); }
+    else if(shape === 'flame'){
+      rr(x, y, g.w, g.h, 10); cx.fill(); cx.stroke();
+      cx.fillStyle = col; for(var f=0; f<5; f++){ var fx = x + 12 + f*(g.w-24)/4; cx.beginPath(); cx.moveTo(fx-6, y); cx.lineTo(fx, y-12 - (f%2)*5); cx.lineTo(fx+6, y); cx.fill(); }
+    } else {
+      rr(x, y, g.w, g.h, 6); cx.fill(); cx.stroke();
+      cx.fillStyle = col; cx.fillRect(x+10, y-8, 6, 8); cx.fillRect(x+g.w-16, y-8, 6, 8); cx.fillRect(x+4, y+g.h, 8, 6); cx.fillRect(x+g.w-12, y+g.h, 8, 6);
+    }
+    cx.fillStyle = g.state === 'dead' ? '#888' : '#ffffff';
+    cx.font = 'bold 13px "Courier New", monospace'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+    var lh = 15, startY = y + g.h/2 - (g.lines.length-1)*lh/2;
+    g.lines.forEach(function(l, i){ cx.fillText(l, x + g.w/2, startY + i*lh); });
+    cx.globalAlpha = 1;
+  }
+  function drawBoss(){
+    var bx = W/2, by = 34, t = performance.now()/300;
+    cx.fillStyle = '#ff4b5c'; rr(bx-110, by-18, 220, 36, 18); cx.fill();
+    cx.fillStyle = '#ff9a3b'; rr(bx-60, by-30, 120, 20, 10); cx.fill();
+    for(var i=0;i<7;i++){ cx.fillStyle = (Math.floor(t)+i)%2 ? '#ffd93b' : '#4bf3ff'; cx.beginPath(); cx.arc(bx-90+i*30, by+4, 5, 0, Math.PI*2); cx.fill(); }
+    cx.fillStyle = '#1a0010'; cx.font = 'bold 11px "Courier New", monospace'; cx.textAlign = 'center'; cx.fillText('BOSS', bx, by-19);
+  }
+  function shLoop(lid){
+    if(!SH.running || lid !== SH.loopId) return;
+    if(activeScreen() !== 'screen-shoot'){ SH.running = false; return; }
+    var paused = anyOverlayOpen();
+    cx.fillStyle = '#04030a'; cx.fillRect(0,0,W,H);
+    SH.stars.forEach(function(s){ if(!paused){ s.y += s.v; if(s.y > H) s.y = 0; } cx.fillStyle = 'rgba(255,255,255,' + (0.3+s.s/3) + ')'; cx.fillRect(s.x, s.y, s.s, s.s); });
+    // ground
+    cx.fillStyle = '#ffd93b'; for(var gx=0; gx<W; gx+=24){ cx.fillRect(gx, GROUND+30, 12, 4); }
+    if(SH.theme && SH.theme.boss){ drawBoss(); }
+    var L = shLayout();
+    SH.targets.forEach(function(g){ drawTarget(g, L.ox + g.rx, L.oy + g.ry); });
+    // ship movement
+    if(!paused && !SH.resolved){
+      if(SH.keys.left){ SH.ship.x -= 7; SH.ship.tx = null; SH.autoFire = null; }
+      if(SH.keys.right){ SH.ship.x += 7; SH.ship.tx = null; SH.autoFire = null; }
+      if(SH.ship.tx !== null){
+        var d = SH.ship.tx - SH.ship.x;
+        SH.ship.x += Math.max(-12, Math.min(12, d));
+        if(Math.abs(d) < 3 && SH.autoFire){ SH.autoFire = null; SH.ship.tx = null; shFire(); }
+      }
+      SH.ship.x = Math.max(20, Math.min(W-20, SH.ship.x));
+    }
+    // ship
+    var sx = SH.ship.x, sy = GROUND + 6;
+    cx.fillStyle = '#4bf3ff';
+    cx.beginPath(); cx.moveTo(sx, sy-22); cx.lineTo(sx+18, sy+10); cx.lineTo(sx-18, sy+10); cx.closePath(); cx.fill();
+    cx.fillStyle = '#ffd93b'; cx.fillRect(sx-3, sy-28, 6, 10);
+    // bullet
+    if(SH.bullet && !paused){
+      SH.bullet.y -= 11;
+      if(!SH.resolved){
+        for(var i=0;i<SH.targets.length;i++){
+          var g = SH.targets[i], gx2 = L.ox + g.rx, gy2 = L.oy + g.ry;
+          if(SH.bullet.x >= gx2 && SH.bullet.x <= gx2 + g.w && SH.bullet.y <= gy2 + g.h && SH.bullet.y >= gy2 - 4){ var hitK = g.k; SH.bullet = null; shResolve(hitK); break; }
+        }
+      }
+      if(SH.bullet && SH.bullet.y < -10) SH.bullet = null;
+    }
+    if(SH.bullet){ cx.fillStyle = '#ffd93b'; cx.fillRect(SH.bullet.x-2, SH.bullet.y-12, 4, 12); }
+    // fx
+    SH.fx = SH.fx.filter(function(p){ if(!paused){ p.x += p.vx; p.y += p.vy; p.vy += 0.08; p.life--; } cx.globalAlpha = Math.max(0, p.life/40); cx.fillStyle = p.c; cx.fillRect(p.x, p.y, 3, 3); cx.globalAlpha = 1; return p.life > 0; });
+    requestAnimationFrame(function(){ shLoop(lid); });
+  }
+  function canvasXY(e){ var r = cv.getBoundingClientRect(); return {x:(e.clientX - r.left) * W / r.width, y:(e.clientY - r.top) * H / r.height}; }
+  cv.addEventListener('mousemove', function(e){ if(SH.resolved || SH.autoFire) return; SH.ship.tx = canvasXY(e).x; });
+  cv.addEventListener('click', function(e){
+    if(SH.resolved) return;
+    var p = canvasXY(e), L = shLayout(), hit = null;
+    SH.targets.forEach(function(g){ var gx = L.ox+g.rx, gy = L.oy+g.ry; if(p.x >= gx && p.x <= gx+g.w && p.y >= gy-10 && p.y <= gy+g.h+10) hit = g.k; });
+    if(hit){ shAimAt(hit); } else { SH.ship.tx = p.x; SH.autoFire = '__any'; }
+  });
+  // '__any' fires once the ship arrives at a clicked empty spot
+  $('shoot-legend').addEventListener('click', function(e){
+    var li = e.target.closest('li'); if(li && !SH.resolved){ shAimAt(li.getAttribute('data-k')); }
+  });
+
+  // =========================================================
+  // BOSS: LADDER (burglary elements, bottom rung first)
+  // =========================================================
+  var GRADE_OPTS = BURG_RUNGS, LTOP = BURG_RUNGS.length - 1;
+  var LD = { items:[], ci:0, pos:LTOP, resolved:true, hits:0 };
+  function ladderStart(){
+    LD.items = drawItems(6); LD.ci = -1; LD.hits = 0;
+    $('vault-hp-fill').style.width = '100%';
+    var lad = $('ladder');
+    Array.prototype.slice.call(lad.querySelectorAll('.rung')).forEach(function(r){ r.remove(); });
+    GRADE_OPTS.forEach(function(o, i){
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'rung'; b.setAttribute('data-k', o.k); b.setAttribute('data-i', i);
+      b.innerHTML = '<span class="rk">' + (i === 0 ? '★' : (LTOP+1-i)) + '</span>' + o.label;
+      b.onclick = function(){ if(LD.resolved) return; LD.pos = i; ladderPlace(); sfxStep(); setTimeout(ladderLock, 180); };
+      lad.appendChild(b);
+    });
+    showScreen('screen-ladder');
+    ladderNext();
+  }
+  function ladderPlace(){
+    var rungs = $('ladder').querySelectorAll('.rung');
+    for(var i=0;i<rungs.length;i++){ rungs[i].classList.toggle('here', i === LD.pos && !LD.resolved); }
+    var r = rungs[LD.pos];
+    if(r){ $('climber').style.top = (r.offsetTop + r.offsetHeight/2 - 15) + 'px'; }
+  }
+  window.ladderNext = function(){
+    sfxClick();
+    if(state.pendingGameOver){ triggerGameOver(); return; }
+    LD.ci++;
+    if(LD.ci >= LD.items.length){ finishLevel(6); return; }
+    var item = LD.items[LD.ci];
+    $('ladder-progress').textContent = 'CASE ' + (LD.ci+1) + '/' + LD.items.length;
+    $('ladder-text').innerHTML = item.text;
+    var rungs = $('ladder').querySelectorAll('.rung');
+    for(var i=0;i<rungs.length;i++){ rungs[i].disabled = false; rungs[i].classList.remove('correct','incorrect'); }
+    LD.pos = LTOP; LD.resolved = false; ladderPlace();
+    $('ladder-lock').disabled = false; $('ladder-skip').disabled = false;
+    $('ladder-why').className = 'why-box'; $('ladder-why').innerHTML = '';
+    $('ladder-next-row').style.display = 'none';
+    $('ladder-streak').textContent = streakText();
+    $('ladder-progress').scrollIntoView({behavior:'smooth', block:'start'});
+    startTimer(LV[6].sec * 1000, null, function(){ ladderResolve(null); });
+  };
+  function ladderMove(d){ if(LD.resolved) return; LD.pos = Math.max(0, Math.min(LTOP, LD.pos + d)); sfxStep(); ladderPlace(); }
+  window.ladderLock = function(){ if(LD.resolved) return; ladderResolve(GRADE_OPTS[LD.pos].k); };
+  window.ladderResolve = function(k){
+    if(LD.resolved) return;
+    LD.resolved = true; stopTimer();
+    var item = LD.items[LD.ci];
+    var skipped = k === '__skip', correct = !skipped && k === item.ans;
+    var pts = recordResult(correct, skipped);
+    if(!correct && !skipped) sfxBoom();
+    var ansLabel = '';
+    var rungs = $('ladder').querySelectorAll('.rung');
+    for(var i=0;i<rungs.length;i++){
+      var rk = rungs[i].getAttribute('data-k'); rungs[i].disabled = true; rungs[i].classList.remove('here');
+      if(rk === item.ans){ rungs[i].classList.add('correct'); } else if(rk === k){ rungs[i].classList.add('incorrect'); }
+    }
+    GRADE_OPTS.forEach(function(o){ if(o.k === item.ans) ansLabel = (o.k === 'all' ? o.label : 'the first element that fails is ' + o.label.toLowerCase()); });
+    if(correct || skipped){ LD.hits++; $('vault-hp-fill').style.width = Math.max(0, 100 - LD.hits/LD.items.length*100) + '%'; }
+    $('ladder-lock').disabled = true; $('ladder-skip').disabled = true;
+    var w = $('ladder-why');
+    w.className = 'why-box ' + ((correct || skipped) ? 'ok' : 'bad');
+    w.innerHTML = verdictHtml(correct, skipped, k === null, pts, ansLabel, item.why);
+    var last = LD.ci >= LD.items.length - 1;
+    $('ladder-next').textContent = state.pendingGameOver ? 'GAME OVER ▶' : (last ? 'SEE RESULTS ▶' : 'NEXT CASE ▶');
+    $('ladder-next-row').style.display = 'block';
+    $('ladder-streak').textContent = streakText();
+    w.scrollIntoView({behavior:'smooth', block:'nearest'});
+  };
+
+  // ---------- Keyboard ----------
+  document.addEventListener('keydown', function(e){
+    if(e.target && e.target.tagName === 'INPUT') return;
+    if(anyOverlayOpen()) return;
+    var scr = activeScreen(), key = e.key;
+    if(scr === 'screen-fall' && !l1Resolved){
+      if(key === 'ArrowLeft'){ e.preventDefault(); l1Move('left'); }
+      else if(key === 'ArrowRight'){ e.preventDefault(); l1Move('right'); }
+      else if(key === 'ArrowDown' || key === ' '){ e.preventDefault(); l1Slam(null); }
+    } else if(scr === 'screen-shoot' && !SH.resolved){
+      if(key === 'ArrowLeft'){ e.preventDefault(); SH.keys.left = true; }
+      else if(key === 'ArrowRight'){ e.preventDefault(); SH.keys.right = true; }
+      else if(key === ' '){ e.preventDefault(); shFire(); }
+      else if(/^[a-eA-E]$/.test(key)){
+        var g = SH.targets.filter(function(t){ return t.letter === key.toUpperCase(); })[0];
+        if(g){ e.preventDefault(); shAimAt(g.k); }
+      }
+    } else if(scr === 'screen-ladder' && !LD.resolved){
+      if(key === 'ArrowUp'){ e.preventDefault(); ladderMove(-1); }
+      else if(key === 'ArrowDown'){ e.preventDefault(); ladderMove(1); }
+      else if(key === ' ' || key === 'Enter'){ e.preventDefault(); ladderLock(); }
+    }
+  });
+  document.addEventListener('keyup', function(e){
+    if(e.key === 'ArrowLeft') SH.keys.left = false;
+    if(e.key === 'ArrowRight') SH.keys.right = false;
+  });
+  // auto-fire after a click on empty space
+  setInterval(function(){
+    if(SH.autoFire === '__any' && SH.ship.tx !== null && Math.abs(SH.ship.tx - SH.ship.x) < 3){ SH.autoFire = null; SH.ship.tx = null; shFire(); }
+  }, 30);
+
+  // ---------- Level complete / end ----------
+  function finishLevel(n){
+    stopAll();
+    var st = state.stats[n];
+    $('done-title').textContent = (n === 6 ? 'VAULT CRACKED' : 'LEVEL ' + n + ' CLEAR: ' + LV[n].name.toUpperCase());
+    var flawless = st.answered > 0 && state.levelMistakes === 0;
+    $('done-score').innerHTML = st.correct + ' / ' + st.total + ' CORRECT<br>SCORE ' + fmt(state.score) + (flawless ? '<br><span style="color:var(--green)">FLAWLESS LEVEL!</span>' : '');
+    $('done-recap').innerHTML = '<p>' + esc(LV[n].recap) + '</p><p class="small"><b>Key terms:</b> ' + esc(LV[n].terms) + '</p>';
+    $('done-next').textContent = n === 6 ? 'SEE FINAL RESULTS ▶' : 'CONTINUE TO ' + (n === 5 ? 'THE BOSS' : 'LEVEL ' + (n+1)) + ' ▶';
+    showScreen('screen-done');
+    playVictoryJingle();
+    if(flawless){ setTimeout(function(){ grantLife('FLAWLESS'); }, 900); }
+  }
+  window.afterDone = function(){ sfxClick(); if(state.level >= 6){ showEnd(); } else { startLevel(state.level + 1); } };
+  function levelTitle(n){ return LV[n].label.replace('the Boss Round','Boss Round'); }
+  function recapHtml(){
+    var h = '';
+    for(var n=1;n<=6;n++){ h += '<p class="recap-item"><b>' + esc(levelTitle(n)) + ':</b> ' + esc(LV[n].recap) + '</p>'; }
+    return h;
+  }
+  function totals(){ var c = 0, t = 0; for(var n=1;n<=6;n++){ t += levelItemCount(n); if(state.stats[n]) c += state.stats[n].correct; } return {c:c, t:t}; }
+  function showEnd(){
+    state.finished = true; stopAll();
+    var tc = totals();
+    $('end-score').innerHTML = 'FINAL SCORE ' + fmt(state.score) + '<br>' + tc.c + ' / ' + tc.t + ' CORRECT · BEST STREAK ' + state.bestStreak;
+    $('end-ranks').innerHTML = renderRankTable(state.score);
+    $('end-recap').innerHTML = recapHtml();
+    $('end-status').textContent = '';
+    showScreen('screen-end');
+    playVictoryJingle();
+  }
+  function triggerGameOver(){
+    stopAll(); playGameOverJingle();
+    $('gameover-level').textContent = 'You ran out of lives during ' + (LV[state.level] ? LV[state.level].label : 'the game') + '.';
+    $('gameover-score').innerHTML = 'FINAL SCORE ' + fmt(state.score);
+    $('gameover-ranks').innerHTML = renderRankTable(state.score);
+    $('go-status').textContent = '';
+    showScreen('screen-gameover');
+  }
+  window.playAgain = function(){ sfxClick(); stopAll(); state = freshState(); if(teacher) state.teacherUsed = true; updateHud(); showScreen('screen-title'); };
+
+  // ---------- Teacher mode (in-page dialog; no browser prompt) ----------
+  function renderTeacherOverlay(){
+    $('teacher-locked').style.display = teacher ? 'none' : 'block';
+    $('teacher-unlocked').style.display = teacher ? 'block' : 'none';
+  }
+  window.openTeacher = function(){
+    sfxClick(); renderTeacherOverlay(); $('teacher-err').textContent = ''; $('teacher-pw').value = '';
+    $('teacher-overlay').classList.add('show');
+    if(!teacher) setTimeout(function(){ $('teacher-pw').focus(); }, 50);
+  };
+  window.closeTeacher = function(){ sfxClick(); $('teacher-overlay').classList.remove('show'); };
+  window.submitTeacher = function(e){
+    e.preventDefault();
+    if($('teacher-pw').value === TEACHER_PASSWORD){
+      teacher = true; state.teacherUsed = true; document.body.classList.add('teacher');
+      $('hud-teacher-btn').textContent = '🔑 TEACHER: ON';
+      playExtraLifeJingle(); renderTeacherOverlay();
+    } else { sfxWrong(); $('teacher-err').textContent = 'Incorrect password.'; }
+  };
+  window.teacherOff = function(){
+    teacher = false; document.body.classList.remove('teacher');
+    $('hud-teacher-btn').textContent = '🔑 TEACHER';
+    renderTeacherOverlay(); closeTeacher();
+  };
+  window.jumpToLevel = function(n){
+    if(!teacher) return;
+    $('teacher-overlay').classList.remove('show');
+    stopAll(); state.pendingGameOver = false;
+    if(state.lives <= 0){ state.lives = START_LIVES; }
+    startLevel(n);
+  };
+
+  // ---------- Completion report ----------
+  function buildReportHtml(name){
+    var tc = totals(), r = rankFor(state.score);
+    var date = new Date().toLocaleDateString('en-US', {year:'numeric', month:'long', day:'numeric'});
+    var title = GAME_SHORT + ' - Report - ' + name;
+    var status = state.finished ? 'Completed all levels' : ('Game over during ' + (LV[state.level] ? LV[state.level].label : 'the game'));
+    var rankRows = RANKS.map(function(x){
+      var a = x === r;
+      return '<tr' + (a ? ' class="mine"' : '') + '><td>' + (a ? '▶ ' : '') + esc(x.label) + '</td><td>' + rangeStr(x) + '</td><td>' + esc(x.meaning) + '</td></tr>';
+    }).join('');
+    var lvRows = '';
+    for(var n=1;n<=6;n++){
+      var st = state.stats[n];
+      var sc = st ? (st.correct + '/' + st.total + ' correct' + (st.skipped ? ' (' + st.skipped + ' skipped in teacher mode)' : '')) : 'Not reached';
+      lvRows += '<div class="qa-row"><h3>' + esc(levelTitle(n)) + ': ' + esc(sc) + '</h3><p>' + esc(LV[n].recap) + '</p><p><b>Key terms to review:</b> ' + esc(LV[n].terms) + '</p></div>';
+    }
+    return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>' + esc(title) + '</title><style>' +
+      '@page{margin:0.7in;} body{font-family:Georgia,"Times New Roman",serif; color:#000; background:#fff; max-width:760px; margin:24px auto; padding:0 18px; line-height:1.45; font-size:12pt;}' +
+      'h1{font-size:20pt; margin:0 0 4px;} h2{font-size:14pt; margin:22px 0 8px; border-bottom:1px solid #999; padding-bottom:3px;} h3{font-size:12pt; margin:12px 0 4px;}' +
+      'table{border-collapse:collapse; width:100%; font-size:11pt;} td,th{border:1px solid #999; padding:5px 7px; vertical-align:top; text-align:left;} tr.mine td{background:#e8f5e8; font-weight:bold;}' +
+      '.meta td{border:none; padding:2px 10px 2px 0;} .note{font-size:10.5pt; color:#333;} .print-bar{background:#fff7cc; border:1px solid #d6b600; padding:10px 12px; margin-bottom:18px; font-family:Arial,sans-serif; font-size:11pt;}' +
+      '.print-bar button{margin-left:10px; padding:6px 12px; font-size:11pt; cursor:pointer;} @media print{ .print-bar{display:none;} .qa-row, tr{break-inside:avoid;} }' +
+      '</style></head><body>' +
+      '<div class="print-bar">To submit, save this page as a PDF: click the button and choose “Save as PDF” as the destination. <button onclick="window.print()">Print / Save as PDF</button></div>' +
+      '<h1>' + esc(GAME_TITLE) + ': Completion Report</h1>' +
+      '<p class="note">Criminal Law · Theft Crimes &amp; Burglary</p>' +
+      '<table class="meta"><tr><td><b>Student:</b></td><td>' + esc(name) + '</td></tr><tr><td><b>Date:</b></td><td>' + esc(date) + '</td></tr>' +
+      '<tr><td><b>Status:</b></td><td>' + esc(status) + '</td></tr><tr><td><b>Correct answers:</b></td><td>' + tc.c + '/' + tc.t + '</td></tr>' +
+      '<tr><td><b>Final score:</b></td><td>' + fmt(state.score) + ' pts</td></tr><tr><td><b>Rank achieved:</b></td><td>' + esc(r.label) + '</td></tr>' +
+      '<tr><td><b>Best streak:</b></td><td>' + state.bestStreak + ' in a row</td></tr><tr><td><b>Reading speed at finish:</b></td><td>' + esc(PACE_LABELS[PACE_MODE]) + '</td></tr></table>' +
+      (state.teacherUsed ? '<p class="note"><b>Note:</b> Teacher mode was used during this run (lives were not lost and some answers may have been revealed).</p>' : '') +
+      '<p class="note">Scoring: each correct answer earns 100 points (150 in the Boss Round) plus up to 50 speed points; extra lives earned with a full bank of 6 convert to 250 points. Wrong answers and timeouts cost a life, not points.</p>' +
+      '<h2>Rank Table</h2><table><tr><th>Rank</th><th>Points needed</th><th>Meaning</th></tr>' + rankRows + '</table>' +
+      '<h2>Concept Summary by Level</h2><p class="note">This is a study recap of the concepts each level covered, not a question-by-question answer key.</p>' + lvRows +
+      '</body></html>';
+  }
+  function reportName(which){
+    var inp = $(which === 'end' ? 'end-name' : 'go-name');
+    var name = inp.value.trim();
+    if(!name){ $(which === 'end' ? 'end-status' : 'go-status').textContent = 'Please enter your name first.'; sfxWrong(); inp.focus(); return null; }
+    return name;
+  }
+  function safeFile(s){ return s.replace(/[\\\/:*?"<>|]/g, '').trim(); }
+  function openPdfReport(html){
+    var w = null;
+    try{ w = window.open('', '_blank'); }catch(e){ w = null; }
+    if(w && w.document){
+      w.document.open(); w.document.write(html); w.document.close();
+      var fire = function(){ try{ w.focus(); w.print(); }catch(e){} };
+      if(w.document.readyState === 'complete'){ setTimeout(fire, 300); }
+      else { w.addEventListener('load', function(){ setTimeout(fire, 300); }); }
+    } else {
+      var fr = document.createElement('iframe');
+      fr.style.cssText = 'position:fixed; right:0; bottom:0; width:0; height:0; border:0;';
+      document.body.appendChild(fr);
+      fr.onload = function(){ setTimeout(function(){ try{ fr.contentWindow.focus(); fr.contentWindow.print(); }catch(e){} setTimeout(function(){ fr.remove(); }, 60000); }, 300); };
+      fr.srcdoc = html;
+    }
+  }
+  // Downloads: inside a published claude.ai artifact, files go through the page's downloads capability;
+  // in a plain browser tab, through an ordinary <a download>.
+  var DL = null;
+  try{ if(window.claude && typeof window.claude.use === 'function'){ window.claude.use('downloads').then(function(d){ DL = d; }, function(){ DL = null; }); } }catch(e){}
+  function statusEl(which){ return $(which === 'end' ? 'end-status' : 'go-status'); }
+  function deliverFile(which, filename, data, okMsg){
+    if(DL){
+      DL.save({filename:filename, data:data}).then(function(){ statusEl(which).textContent = okMsg; },
+        function(err){ statusEl(which).textContent = (err && err.code === 'declined') ? 'Save canceled.' : 'Saving isn’t available in this view. Open the game in its own browser tab and try again.'; });
+      return;
+    }
+    var blob = (data instanceof Blob) ? data : new Blob([data], {type:'text/html'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = filename;
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+    statusEl(which).textContent = okMsg;
+  }
+  function pdfSafe(t){
+    return String(t).replace(/[“”]/g,'"').replace(/[‘’]/g,"'").replace(/[–—]/g,'-')
+      .replace(/▶/g,'>').replace(/→/g,'->').replace(/·/g,'-').replace(/[^\x00-\xff]/g,'');
+  }
+  function buildReportPdf(name){
+    var jsPDF = window.jspdf.jsPDF;
+    var doc = new jsPDF({unit:'pt', format:'letter'});
+    var M = 54, PW = 612 - 2*M, y = M, PH = 792;
+    doc.setProperties({title: pdfSafe(GAME_SHORT + ' - Report - ' + name)});
+    function need(h){ if(y + h > PH - M){ doc.addPage(); y = M; } }
+    function para(text, size, style, gapAfter, indent){
+      doc.setFont('times', style || 'normal'); doc.setFontSize(size);
+      var lines = doc.splitTextToSize(pdfSafe(text), PW - (indent||0));
+      var lh = size * 1.3;
+      lines.forEach(function(l){ need(lh); doc.text(l, M + (indent||0), y + size); y += lh; });
+      y += (gapAfter === undefined ? 6 : gapAfter);
+    }
+    function blockHeight(parts){ var h = 0; parts.forEach(function(p){ doc.setFont('times', p[2]||'normal'); doc.setFontSize(p[1]); h += doc.splitTextToSize(pdfSafe(p[0]), PW - (p[4]||0)).length * p[1]*1.3 + (p[3]===undefined?6:p[3]); }); return h; }
+    function block(parts){ need(blockHeight(parts)); parts.forEach(function(p){ para(p[0], p[1], p[2], p[3], p[4]); }); }
+    function rule(){ need(10); doc.setDrawColor(150); doc.line(M, y, M+PW, y); y += 10; }
+    var tc = totals(), r = rankFor(state.score);
+    var date = new Date().toLocaleDateString('en-US', {year:'numeric', month:'long', day:'numeric'});
+    var status = state.finished ? 'Completed all levels' : ('Game over during ' + (LV[state.level] ? LV[state.level].label : 'the game'));
+    para(GAME_TITLE + ': Completion Report', 18, 'bold', 2);
+    para('Criminal Law - Theft Crimes & Burglary', 10, 'italic', 12);
+    [['Student', name], ['Date', date], ['Status', status], ['Correct answers', tc.c + '/' + tc.t], ['Final score', fmt(state.score) + ' pts'],
+     ['Rank achieved', r.label], ['Best streak', state.bestStreak + ' in a row'], ['Reading speed at finish', PACE_LABELS[PACE_MODE]]].forEach(function(row){
+      need(16); doc.setFontSize(11.5); doc.setFont('times','bold'); doc.text(pdfSafe(row[0] + ':'), M, y + 11.5);
+      doc.setFont('times','normal'); doc.text(pdfSafe(row[1]), M + 160, y + 11.5); y += 16;
+    });
+    y += 6;
+    if(state.teacherUsed){ para('Note: Teacher mode was used during this run (lives were not lost and some answers may have been revealed).', 10, 'bold', 6); }
+    para('Scoring: each correct answer earns 100 points (150 in the Boss Round) plus up to 50 speed points; extra lives earned with a full bank of 6 convert to 250 points. Wrong answers and timeouts cost a life, not points.', 10, 'normal', 12);
+    para('Rank Table', 14, 'bold', 2); rule();
+    RANKS.forEach(function(x){
+      var mine = x === r;
+      block([[(mine ? '> YOUR RANK: ' : '') + x.label + '   (' + rangeStr(x) + ')', 11.5, 'bold', 1], [x.meaning, 10.5, mine ? 'bold' : 'normal', 8, 14]]);
+    });
+    y += 6;
+    para('Concept Summary by Level', 14, 'bold', 2); rule();
+    para('This is a study recap of the concepts each level covered, not a question-by-question answer key.', 10, 'italic', 8);
+    for(var n=1;n<=6;n++){
+      var st = state.stats[n];
+      var sc = st ? (st.correct + '/' + st.total + ' correct' + (st.skipped ? ' (' + st.skipped + ' skipped in teacher mode)' : '')) : 'Not reached';
+      block([[levelTitle(n) + ': ' + sc, 12, 'bold', 2], [LV[n].recap, 11, 'normal', 3], ['Key terms to review: ' + LV[n].terms, 11, 'italic', 10]]);
+    }
+    return doc.output('blob');
+  }
+  window.saveReportPdf = function(which){
+    var name = reportName(which); if(!name) return;
+    sfxClick();
+    var fname = safeFile(GAME_SHORT + ' - Report - ' + name) + '.pdf';
+    if(window.jspdf && window.jspdf.jsPDF){
+      try{
+        statusEl(which).textContent = 'Preparing your PDF…';
+        deliverFile(which, fname, buildReportPdf(name), 'Saved “' + fname + '”. Submit that PDF.');
+        return;
+      }catch(e){ /* fall through to the print route */ }
+    }
+    openPdfReport(buildReportHtml(name));
+    statusEl(which).textContent = 'In the print window, choose “Save as PDF” (or “Microsoft Print to PDF”) as the destination, then click Save.';
+  };
+  window.downloadReport = function(which){
+    var name = reportName(which); if(!name) return;
+    sfxClick();
+    deliverFile(which, safeFile(GAME_SHORT + ' - Report - ' + name) + '.html', buildReportHtml(name),
+      'Report downloaded. Open it and use its Print / Save as PDF button to make the PDF.');
+  };
+
+  setPace('standard', true);
+  updateHud(); updateGateLabels();
+})();
+</script>
+</body>
+</html>
